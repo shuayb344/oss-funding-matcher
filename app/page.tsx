@@ -177,15 +177,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="mt-auto border-t border-zinc-800/50 py-8">
-        <div className="mx-auto max-w-3xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-600">
-          <span>OSS Funding Matcher &middot; Open source</span>
-          <span className="flex items-center gap-1.5">
-            Built with Next.js, Supabase &amp; Auth.js
-          </span>
-        </div>
-      </footer>
     </div>
   );
 }
