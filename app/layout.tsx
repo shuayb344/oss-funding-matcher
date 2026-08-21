@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { SessionProvider } from "next-auth/react";
+import { Providers } from "@/components/Providers";
 import { Analytics } from "@vercel/analytics/react";
-import { ThemeProvider } from "@/components/ThemeProvider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import "./globals.css";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,15 +61,14 @@ export default function RootLayout({
         <meta name="theme-color" content="#09090b" />
       </head>
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 light:bg-white light:text-zinc-900">
-        <ThemeProvider>
-          <SessionProvider>
-            <Navbar />
-            <main className="flex-1 pt-14">{children}</main>
-            <Footer />
-          </SessionProvider>
-        </ThemeProvider>
+        <Providers>
+          <Navbar />
+          <main className="flex-1 pt-14">{children}</main>
+          <Footer />
+        </Providers>
         <Analytics />
       </body>
     </html>
   );
 }
+

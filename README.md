@@ -16,7 +16,7 @@ A tool where open source maintainers connect their GitHub repo, see how critical
 | Auth | Auth.js (NextAuth) with GitHub provider | Free, handles OAuth cleanly |
 | Database | Supabase (Postgres) | Free tier, no credit card |
 | Hosting | Vercel Hobby tier | Free, integrates natively with Next.js |
-| AI | GitHub Models (primary), Google AI Studio (fallback) | Free for any GitHub account |
+| AI | Google AI Studio (Gemini 2.0 Flash) | Free tier, fast inference, no credit card required |
 
 ## Criticality Scoring
 
@@ -47,11 +47,10 @@ Factors and weights:
 - **Homepage URL:** `http://localhost:3000`
 - **Authorization callback URL:** `http://localhost:3000/api/auth/callback/github`
 
-### AI Providers (optional for Week 1)
+### AI Provider
 
-For matching and pitch generation, you need at least one AI provider:
-- **GitHub Models:** Create a PAT at [github.com/settings/tokens](https://github.com/settings/tokens) with no special scopes
-- **Google AI Studio:** Get a key at [aistudio.google.com](https://aistudio.google.com) (free)
+For matching and pitch generation, set up a free Google AI Studio API key:
+- **Google AI Studio:** Get a key at [aistudio.google.com](https://aistudio.google.com) and add it as `GOOGLE_AI_STUDIO_KEY` in `.env.local`.
 
 ## Project Structure
 
@@ -77,7 +76,7 @@ oss-funding-matcher/
 │   ├── EmptyState.tsx                    # Empty state component
 │   └── LoadingSkeleton.tsx               # Loading skeletons
 ├── lib/
-│   ├── ai.ts                             # AI provider abstraction + fallback
+│   ├── ai.ts                             # AI provider integration (Google AI Studio / Gemini)
 │   ├── auth.ts                           # Auth.js config
 │   ├── db.ts                             # Supabase client
 │   ├── github.ts                         # GitHub API helpers

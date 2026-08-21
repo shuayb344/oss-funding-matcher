@@ -28,14 +28,14 @@ export interface GitHubRepo {
  */
 export async function fetchUserRepos(
   accessToken: string,
-  username: string
+  username?: string
 ): Promise<GitHubRepo[]> {
   const repos: GitHubRepo[] = [];
   let page = 1;
 
   while (true) {
-    const res = await fetch(
-      `${GITHUB_API}/users/${username}/repos?type=public&sort=updated&per_page=100&page=${page}`,
+    let res = await fetch(
+      `${GITHUB_API}/user/repos?sort=updated&per_page=100&page=${page}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -44,6 +44,19 @@ export async function fetchUserRepos(
         },
       }
     );
+
+    if (!res.ok && username && !username.includes(" ")) {
+      res = await fetch(
+        `${GITHUB_API}/users/${username}/repos?type=public&sort=updated&per_page=100&page=${page}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        }
+      );
+    }
 
     if (!res.ok) {
       throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);

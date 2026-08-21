@@ -53,21 +53,24 @@ export async function POST() {
   }
 
   // We need a GitHub access token to call the API.
-  // Auth.js stores it in the Account table.
-  const { data: account } = await supabase
-    .from("accounts")
-    .select("access_token")
-    .eq("userId", dbUser.id)
-    .single();
+  // Try session token first, then fallback to Account table.
+  let token = (session.user as any)?.accessToken;
 
-  if (!account?.access_token) {
+  if (!token) {
+    const { data: account } = await supabase
+      .from("accounts")
+      .select("access_token")
+      .eq("userId", dbUser.id)
+      .single();
+    token = account?.access_token;
+  }
+
+  if (!token) {
     return NextResponse.json(
       { error: "GitHub access token not found. Please re-authenticate." },
       { status: 401 }
     );
   }
-
-  const token = account.access_token;
 
   try {
     // Fetch repos from GitHub
@@ -131,10 +134,10 @@ export async function POST() {
       synced: results.length,
       repos: results,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Sync failed:", err);
     return NextResponse.json(
-      { error: "Failed to sync repositories" },
+      { error: err?.message || "Failed to sync repositories" },
       { status: 500 }
     );
   }
