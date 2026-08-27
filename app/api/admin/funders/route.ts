@@ -1,14 +1,7 @@
 import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
-
-// Simple admin check — in production, use a role column or admin list
-const ADMIN_GITHUB_IDS = (process.env.ADMIN_GITHUB_IDS || "").split(",").filter(Boolean);
-
-async function isAdmin(userId: string): Promise<boolean> {
-  if (ADMIN_GITHUB_IDS.length === 0) return true; // No admin list = anyone can manage (dev mode)
-  return ADMIN_GITHUB_IDS.includes(userId);
-}
+import { isUserAdmin } from "@/lib/admin";
 
 /**
  * POST /api/admin/funders — Create a new funder
@@ -18,7 +11,11 @@ export async function POST(request: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!(await isAdmin(session.user.id))) {
+
+  const userId = (session.user as any).id;
+  const username = (session.user as any).username || session.user.name;
+
+  if (!isUserAdmin(userId, username)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -59,7 +56,11 @@ export async function PATCH(request: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!(await isAdmin(session.user.id))) {
+
+  const userId = (session.user as any).id;
+  const username = (session.user as any).username || session.user.name;
+
+  if (!isUserAdmin(userId, username)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -92,7 +93,11 @@ export async function DELETE(request: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!(await isAdmin(session.user.id))) {
+
+  const userId = (session.user as any).id;
+  const username = (session.user as any).username || session.user.name;
+
+  if (!isUserAdmin(userId, username)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

@@ -22,7 +22,6 @@ export const authOptions: NextAuthOptions = {
           const githubId = String((profile as any).id || user.id);
           const username = (profile as any).login || user.name || user.email || "unknown";
 
-          
           // Upsert user into Supabase
           const { data: dbUser } = await supabase
             .from("users")
@@ -62,13 +61,14 @@ export const authOptions: NextAuthOptions = {
       if (account && profile) {
         token.accessToken = account.access_token;
         token.githubId = String((profile as any).id || user?.id);
-
+        token.username = (profile as any).login || user?.name || "";
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.githubId || token.sub;
+        (session.user as any).username = token.username;
         (session.user as any).accessToken = token.accessToken;
       }
       return session;
@@ -84,5 +84,3 @@ export const authOptions: NextAuthOptions = {
 export async function auth() {
   return await getServerSession(authOptions);
 }
-
-
