@@ -1,8 +1,4 @@
-// lib/ai.ts
-// Primary: Google AI Studio / Gemini (Flash model only — Pro is paid-only
-//          since April 2026). Fallback: Groq (Llama 3.3 70B).
-// GitHub Models was retired July 30, 2026 and is no longer usable —
-// do not create a GITHUB_TOKEN for AI calls.
+
 
 export interface AIResponse {
   content: string;
@@ -61,19 +57,17 @@ async function callGroq(prompt: string): Promise<AIResponse> {
   return { content, provider: "groq" };
 }
 
-function isRateLimitError(err: unknown): boolean {
-  return err instanceof Error && err.message === "RATE_LIMITED";
-}
-
-/** Tries Gemini first, falls back to Groq on rate limit. */
+/** Tries Gemini first, falls back to Groq on any Gemini error or rate limit. */
 export async function callAI(prompt: string): Promise<AIResponse> {
   try {
     return await callGoogleGemini(prompt);
-  } catch (err) {
-    if (isRateLimitError(err)) {
-      console.log("Gemini rate-limited, falling back to Groq");
+  } catch (err: any) {
+    console.warn(`Gemini API failed (${err?.message || err}). Falling back to Groq...`);
+    try {
       return await callGroq(prompt);
+    } catch (groqErr: any) {
+      console.error(`Groq API fallback also failed (${groqErr?.message || groqErr})`);
+      throw new Error(`AI providers failed. Primary error: ${err?.message || err}`);
     }
-    throw err;
   }
 }

@@ -40,7 +40,7 @@ export async function fetchUserRepos(
         headers: {
           Authorization: `Bearer ${accessToken}`,
           Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
+          "X-GitHub-Api-Version": "2026-03-10",
         },
       }
     );
@@ -52,7 +52,7 @@ export async function fetchUserRepos(
           headers: {
             Authorization: `Bearer ${accessToken}`,
             Accept: "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
+            "X-GitHub-Api-Version": "2026-03-10",
           },
         }
       );
@@ -80,38 +80,40 @@ export async function fetchContributorCount(
   accessToken: string,
   fullName: string
 ): Promise<number> {
-  // Use per_page=1 and check the Link header for total count
-  const res = await fetch(
-    `${GITHUB_API}/repos/${fullName}/contributors?per_page=1&anon=false`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
+  let total = 0;
+  let page = 1;
+
+  while (true) {
+    const res = await fetch(
+      `${GITHUB_API}/repos/${fullName}/contributors?per_page=100&page=${page}&anon=false`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2026-03-10",
+        },
+      }
+    );
+
+    if (!res.ok) {
+      return 0;
     }
-  );
 
-  if (!res.ok) {
-    // If the endpoint fails (e.g. rate limit), return 0
-    return 0;
-  }
-
-  // Parse the last page from the Link header to get total count
-  const linkHeader = res.headers.get("link");
-  if (!linkHeader) {
-    // If no Link header, the result itself tells us
     const data = await res.json();
-    return Array.isArray(data) ? data.length : 0;
+
+    if (!Array.isArray(data)) {
+      return 0;
+    }
+
+    total += data.length;
+    if (data.length < 100) {
+      break;
+    }
+
+    page++;
   }
 
-  const lastMatch = linkHeader.match(/page=(\d+)>;\s*rel="last"/);
-  if (lastMatch) {
-    return parseInt(lastMatch[1], 10);
-  }
-
-  const data = await res.json();
-  return Array.isArray(data) ? data.length : 0;
+  return total;
 }
 
 /**
@@ -134,7 +136,7 @@ export async function fetchRecentCommitCount(
         headers: {
           Authorization: `Bearer ${accessToken}`,
           Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
+          "X-GitHub-Api-Version": "2026-03-10",
         },
       }
     );
@@ -160,7 +162,7 @@ export async function fetchCurrentUser(
     headers: {
       Authorization: `Bearer ${accessToken}`,
       Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
+      "X-GitHub-Api-Version": "2026-03-10",
     },
   });
 

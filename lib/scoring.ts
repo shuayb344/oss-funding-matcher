@@ -1,15 +1,3 @@
-/**
- * Criticality Score — JS reimplementation of OpenSSF's published methodology.
- *
- * Based on: https://github.com/ossf/criticality-score
- * "Inspired by OpenSSF's methodology, reimplemented in JS for serverless compatibility."
- *
- * The original tool is a Go CLI which is awkward to run inside Vercel serverless
- * functions. Instead, we reimplement the published scoring formula directly,
- * using GitHub API data we already fetch.
- *
- * Output: 0.0 – 1.0 (higher = more critical / widely-used)
- */
 
 export interface RepoMetrics {
   stars: number;

@@ -76,57 +76,64 @@ export async function POST() {
     // Fetch repos from GitHub
     const githubRepos = await fetchUserRepos(token, dbUser.username);
 
-    // Process each repo: fetch extra metrics and compute score
+    // Process ALL fetched repos in concurrent batches of 5
     const results = [];
+    const BATCH_SIZE = 5;
 
-    for (const repo of githubRepos.slice(0, 50)) {
-      // Cap at 50 repos per sync to stay within rate limits
-      try {
-        const [contributors_count, commit_frequency] = await Promise.all([
-          fetchContributorCount(token, repo.full_name),
-          fetchRecentCommitCount(token, repo.full_name, 90),
-        ]);
+    for (let i = 0; i < githubRepos.length; i += BATCH_SIZE) {
+      const batch = githubRepos.slice(i, i + BATCH_SIZE);
+      const batchPromises = batch.map(async (repo) => {
+        try {
+          const [contributors_count, commit_frequency] = await Promise.all([
+            fetchContributorCount(token, repo.full_name),
+            fetchRecentCommitCount(token, repo.full_name, 90),
+          ]);
 
-        const metrics: RepoMetrics = {
-          stars: repo.stargazers_count,
-          forks: repo.forks_count,
-          contributors_count,
-          commit_frequency,
-          open_issues: repo.open_issues_count,
-          created_at: repo.created_at,
-          last_push: repo.pushed_at,
-        };
+          const metrics: RepoMetrics = {
+            stars: repo.stargazers_count,
+            forks: repo.forks_count,
+            contributors_count,
+            commit_frequency,
+            open_issues: repo.open_issues_count,
+            created_at: repo.created_at,
+            last_push: repo.pushed_at,
+          };
 
-        const criticality_score = computeCriticalityScore(metrics);
+          const criticality_score = computeCriticalityScore(metrics);
 
-        // Upsert into Supabase
-        const { data: savedRepo } = await supabase
-          .from("repos")
-          .upsert(
-            {
-              user_id: dbUser.id,
-              github_full_name: repo.full_name,
-              description: repo.description,
-              primary_language: repo.language,
-              stars: repo.stargazers_count,
-              forks: repo.forks_count,
-              open_issues: repo.open_issues_count,
-              contributors_count,
-              commit_frequency,
-              criticality_score,
-              last_analyzed_at: new Date().toISOString(),
-            },
-            {
-              onConflict: "user_id,github_full_name",
-            }
-          )
-          .select("id, github_full_name, criticality_score")
-          .single();
+          const { data: savedRepo } = await supabase
+            .from("repos")
+            .upsert(
+              {
+                user_id: dbUser.id,
+                github_full_name: repo.full_name,
+                description: repo.description,
+                primary_language: repo.language,
+                stars: repo.stargazers_count,
+                forks: repo.forks_count,
+                open_issues: repo.open_issues_count,
+                contributors_count,
+                commit_frequency,
+                criticality_score,
+                last_analyzed_at: new Date().toISOString(),
+              },
+              {
+                onConflict: "user_id,github_full_name",
+              }
+            )
+            .select("id, github_full_name, criticality_score")
+            .single();
 
-        results.push(savedRepo);
-      } catch (err) {
-        console.error(`Failed to process ${repo.full_name}:`, err);
-        // Continue with other repos
+          return savedRepo;
+        } catch (err) {
+          console.error(`Failed to process ${repo.full_name}:`, err);
+          return null;
+        }
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      for (const res of batchResults) {
+        if (res) results.push(res);
       }
     }
 

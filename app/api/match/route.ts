@@ -152,26 +152,31 @@ Return ONLY valid JSON, no markdown, no explanation.`;
 
 function parseMatchResponse(content: string): MatchResult[] {
   try {
-    // Try to extract JSON from the response (might have markdown wrapping)
-    const jsonMatch = content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      console.error("No JSON array found in AI response:", content);
-      return [];
+    // Strip markdown code fences if present
+    let cleaned = content.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+    // Extract array portion
+    const match = cleaned.match(/\[[\s\S]*\]/);
+    if (match) {
+      cleaned = match[0];
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    // Fix trailing commas before closing brackets or braces
+    cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
+
+    const parsed = JSON.parse(cleaned);
 
     if (!Array.isArray(parsed)) {
       return [];
     }
 
     return parsed.map((item: any) => ({
-      funder_id: item.funder_id,
+      funder_id: String(item.funder_id || ""),
       match_score: Math.min(100, Math.max(0, parseInt(item.match_score) || 0)),
       reasoning: String(item.reasoning || ""),
-    }));
+    })).filter(m => m.funder_id);
   } catch (err) {
-    console.error("Failed to parse AI response:", err);
+    console.error("Failed to parse AI response:", err, content);
     return [];
   }
 }
