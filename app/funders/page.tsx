@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, ExternalLink, MapPin } from "lucide-react";
 
 interface Funder {
   id: string;
@@ -30,18 +31,16 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export default function FundersPage() {
-  const [funders, setFunders] = useState<Funder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
 
-  useEffect(() => {
-    fetch("/api/funders")
-      .then((r) => r.json())
-      .then((data) => setFunders(data.funders || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: funders = [], isLoading: loading } = useQuery<Funder[]>({
+    queryKey: ["funders"],
+    queryFn: () =>
+      fetch("/api/funders")
+        .then((r) => r.json())
+        .then((data) => data.funders || []),
+  });
 
   const filtered = funders.filter((f) => {
     const matchesSearch =
@@ -72,19 +71,7 @@ export default function FundersPage() {
       {/* Filters */}
       <div className="mb-8 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-            />
-          </svg>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
           <input
             type="text"
             placeholder="Search by name, description, or tag…"
@@ -163,9 +150,7 @@ function FunderCard({ funder }: { funder: Funder }) {
             className="shrink-0 inline-flex items-center gap-1 rounded-full border border-zinc-800 px-3 py-1 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 transition-colors"
           >
             Apply
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-            </svg>
+            <ExternalLink className="h-3 w-3" />
           </a>
         )}
       </div>
@@ -188,8 +173,8 @@ function FunderCard({ funder }: { funder: Funder }) {
             </span>
           ))}
           {funder.region_restriction && (
-            <span className="inline-flex items-center rounded-full border border-amber-900/50 px-2 py-0.5 text-[10px] text-amber-500">
-              📍 {funder.region_restriction}
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-900/50 px-2 py-0.5 text-[10px] text-amber-500">
+              <MapPin className="h-3 w-3" /> {funder.region_restriction}
             </span>
           )}
         </div>
