@@ -6,6 +6,18 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageLoader } from "@/components/LoadingSkeleton";
 import { EmptyState } from "@/components/EmptyState";
+import {
+  ArrowLeft,
+  AlertCircle,
+  Loader2,
+  Search,
+  Sparkles,
+  ExternalLink,
+  Check,
+  Copy,
+  Edit3,
+  RefreshCw,
+} from "lucide-react";
 
 interface Match {
   id: string;
@@ -141,9 +153,7 @@ export default function RepoDetailPage() {
           href="/dashboard"
           className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-          </svg>
+          <ArrowLeft className="h-4 w-4" />
           Back to Dashboard
         </Link>
       </div>
@@ -151,38 +161,33 @@ export default function RepoDetailPage() {
       {/* Error banner */}
       {error && (
         <div className="mb-6 rounded-lg border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400 flex items-center gap-2">
-          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-          </svg>
+          <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
-      {/* Match button */}
-      <div className="mb-8">
-        <button
-          onClick={handleMatch}
-          disabled={loadingMatches}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200 transition-colors disabled:opacity-50"
-        >
-          {loadingMatches ? (
-            <>
-              <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Analyzing funding matches…
-            </>
-          ) : (
-            <>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-              </svg>
-              {matches.length === 0 ? "Find funding matches" : "Re-run matching"}
-            </>
-          )}
-        </button>
-      </div>
+      {/* Match button (only shown when matches exist) */}
+      {matches.length > 0 && (
+        <div className="mb-8">
+          <button
+            onClick={handleMatch}
+            disabled={loadingMatches}
+            className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200 transition-colors disabled:opacity-50"
+          >
+            {loadingMatches ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Analyzing funding matches…
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4" />
+                Re-run matching
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Matches list */}
       {matches.length > 0 && (
@@ -252,17 +257,12 @@ export default function RepoDetailPage() {
                 >
                   {generatingPitch && selectedMatch?.id === match.id ? (
                     <>
-                      <svg className="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
+                      <Loader2 className="h-3 w-3 animate-spin" />
                       Generating…
                     </>
                   ) : (
                     <>
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
-                      </svg>
+                      <Sparkles className="h-3 w-3 text-amber-400" />
                       Generate pitch
                     </>
                   )}
@@ -276,9 +276,7 @@ export default function RepoDetailPage() {
                     className="inline-flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
                   >
                     Learn more
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                    </svg>
+                    <ExternalLink className="h-3 w-3" />
                   </a>
                 )}
               </div>
@@ -287,16 +285,21 @@ export default function RepoDetailPage() {
         </div>
       )}
 
+      {/* Loading matches state */}
+      {loadingMatches && (
+        <div className="py-12 flex flex-col items-center justify-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-8 text-center">
+          <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+          <p className="text-sm font-medium text-zinc-200">Analyzing repository against funding programs...</p>
+          <p className="text-xs text-zinc-500">Evaluating criticality score, language, ecosystem, and requirements</p>
+        </div>
+      )}
+
       {/* No matches yet */}
       {matches.length === 0 && !loadingMatches && (
         <EmptyState
-          icon={
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-          }
+          icon={<Search className="h-6 w-6 text-zinc-400" />}
           title="No matches yet"
-          description="Click the button above to analyze this repo against 18+ verified funding programs."
+          description="Click the button below to analyze this repo against verified funding programs."
           action={{
             label: "Find funding matches",
             onClick: handleMatch,
@@ -321,9 +324,7 @@ export default function RepoDetailPage() {
                   onClick={startEditing}
                   className="inline-flex items-center gap-1.5 rounded-full border border-emerald-900 px-3 py-1 text-xs text-emerald-400 hover:bg-emerald-900/30 transition-colors"
                 >
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                  </svg>
+                  <Edit3 className="h-3 w-3" />
                   Edit
                 </button>
               )}
@@ -333,16 +334,12 @@ export default function RepoDetailPage() {
               >
                 {copied ? (
                   <>
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                    </svg>
+                    <Check className="h-3 w-3 text-emerald-400" />
                     Copied!
                   </>
                 ) : (
                   <>
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
-                    </svg>
+                    <Copy className="h-3 w-3" />
                     Copy
                   </>
                 )}

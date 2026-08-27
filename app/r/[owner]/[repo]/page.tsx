@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/db";
+import { Star, ArrowRight } from "lucide-react";
 
 interface Props {
   params: Promise<{ owner: string; repo: string }>;
@@ -101,7 +102,9 @@ export default async function PublicRepoPage({ params }: Props) {
           {repoData.primary_language && (
             <span>{repoData.primary_language}</span>
           )}
-          <span>⭐ {repoData.stars ?? 0}</span>
+          <span className="flex items-center gap-1">
+            <Star className="h-3.5 w-3.5 text-amber-400/80" /> {repoData.stars ?? 0}
+          </span>
         </div>
       </div>
 
@@ -180,9 +183,7 @@ export default async function PublicRepoPage({ params }: Props) {
           className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200 transition-colors"
         >
           Try OSS Funding Matcher
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-          </svg>
+          <ArrowRight className="h-4 w-4" />
         </a>
       </div>
     </div>

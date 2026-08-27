@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BookOpen } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "How Criticality Scoring Works — OSS Funding Matcher",
@@ -59,7 +60,7 @@ const factors = [
       "Open issues as a proxy for community engagement. More issues = more people using and reporting on the project.",
     why:
       "Issues indicate people are actively using the project, finding edge cases, and engaging with maintainers.",
-    example: "0 issues =无人问津, 500+ = widely used",
+    example: "0 issues = unused, 500+ = widely used",
     color: "bg-orange-500",
   },
   {
@@ -89,9 +90,7 @@ export default function AboutPage() {
           This avoids running their Go CLI inside serverless functions.
         </p>
         <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-500">
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-          </svg>
+          <BookOpen className="h-3.5 w-3.5 text-zinc-400" />
           Based on{" "}
           <a
             href="https://github.com/ossf/criticality-score"
