@@ -1,5 +1,5 @@
 -- OSS Funding Matcher — Database Schema
--- Run this in your Supabase SQL Editor (https://supabase.com/dashboard → SQL Editor)
+
 
 -- ============================================================
 -- USERS
@@ -98,21 +98,23 @@ create index if not exists idx_matches_funder_id on matches(funder_id);
 create index if not exists idx_funders_application_type on funders(application_type);
 
 -- ============================================================
--- PERMISSIONS & GRANTS
+-- ROW LEVEL SECURITY (RLS) & PERMISSIONS
 -- ============================================================
-grant usage on schema public to postgres, anon, authenticated, service_role;
-grant all privileges on all tables in schema public to postgres, anon, authenticated, service_role;
-grant all privileges on all sequences in schema public to postgres, anon, authenticated, service_role;
-grant all privileges on all functions in schema public to postgres, anon, authenticated, service_role;
+alter table users enable row level security;
+alter table accounts enable row level security;
+alter table repos enable row level security;
+alter table funders enable row level security;
+alter table matches enable row level security;
+alter table pitches enable row level security;
 
-alter default privileges in schema public grant all on tables to postgres, anon, authenticated, service_role;
-alter default privileges in schema public grant all on functions to postgres, anon, authenticated, service_role;
-alter default privileges in schema public grant all on sequences to postgres, anon, authenticated, service_role;
+-- Revoke API access on accounts table to prevent token exposure
+revoke all on table accounts from anon, authenticated;
+grant all on table accounts to service_role, postgres;
 
--- Disable RLS restrictions so API handlers and Supabase roles can access data
-alter table users disable row level security;
-alter table accounts disable row level security;
-alter table repos disable row level security;
-alter table funders disable row level security;
-alter table matches disable row level security;
-alter table pitches disable row level security;
+-- Public RLS Policies
+create policy "Allow public read access to funders" on funders for select to anon, authenticated using (true);
+create policy "Allow public read access to user profiles" on users for select to anon, authenticated using (true);
+create policy "Allow public read access to repos" on repos for select to anon, authenticated using (true);
+create policy "Allow public read access to matches" on matches for select to anon, authenticated using (true);
+create policy "Allow authenticated read access to pitches" on pitches for select to authenticated, service_role using (true);
+
