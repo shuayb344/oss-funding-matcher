@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/db";
-import { Star, ArrowRight } from "lucide-react";
+import { Star, GitFork, Users, ArrowRight } from "lucide-react";
 
 interface Props {
   params: Promise<{ owner: string; repo: string }>;
 }
 
-/**
- * Public, shareable page for a repo's criticality score and funding matches.
- * No login required — designed for sharing on social media / HN.
- */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { owner, repo } = await params;
   const fullName = `${owner}/${repo}`;
@@ -32,24 +28,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description:
       repoData?.description ||
       `Check the criticality score and funding matches for ${fullName} on OSS Funding Matcher.`,
-    openGraph: {
-      title: score
-        ? `${fullName}: ${score} criticality score`
-        : `${fullName} — OSS Funding Matcher`,
-      description:
-        repoData?.description ||
-        `Analyzed by OSS Funding Matcher — real funding for real open source projects.`,
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: score
-        ? `${fullName}: ${score} criticality`
-        : `${fullName} — OSS Funding Matcher`,
-      description:
-        repoData?.description ||
-        `Criticality score and funding matches for ${fullName}.`,
-    },
   };
 }
 
@@ -87,83 +65,97 @@ export default async function PublicRepoPage({ params }: Props) {
     .sort((a: any, b: any) => b.match_score - a.match_score);
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-16">
-      {/* Repo header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
-          {fullName}
-        </h1>
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12 min-h-[calc(100vh-3.5rem)]">
+      {/* Repo header card */}
+      <div className="mb-8 border-b border-slate-200 dark:border-white/10 pb-6">
+        <div className="font-mono text-xs uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">
+          // Public Project Report
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-sans sm:text-3xl">
+            {fullName}
+          </h1>
+          {repoData.primary_language && (
+            <span className="border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#111116] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+              {repoData.primary_language}
+            </span>
+          )}
+        </div>
         {repoData.description && (
-          <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
+          <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-zinc-400 leading-relaxed font-sans">
             {repoData.description}
           </p>
         )}
-        <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
-          {repoData.primary_language && (
-            <span>{repoData.primary_language}</span>
-          )}
-          <span className="flex items-center gap-1">
-            <Star className="h-3.5 w-3.5 text-amber-400/80" /> {repoData.stars ?? 0}
+        <div className="mt-4 flex items-center gap-5 font-mono text-xs text-slate-500 dark:text-zinc-400">
+          <span className="flex items-center gap-1.5">
+            <Star className="h-3.5 w-3.5 text-amber-400" /> {repoData.stars ?? 0}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <GitFork className="h-3.5 w-3.5 text-blue-400" /> {repoData.forks ?? 0}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Users className="h-3.5 w-3.5 text-violet-400" /> {repoData.contributors_count ?? 0}
           </span>
         </div>
       </div>
 
-      {/* Score card */}
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6 mb-8">
+      {/* Criticality Score card */}
+      <div className="rounded-none border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0e0e12] backdrop-blur-xl p-6 mb-8 shadow-sm dark:shadow-none">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Criticality Score
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+              Criticality Rating
             </h2>
-            <p className="mt-1 text-xs text-zinc-600">
-              Based on OpenSSF methodology
+            <p className="mt-0.5 font-mono text-[11px] text-zinc-500 uppercase">
+              [ OpenSSF Algorithm ]
             </p>
           </div>
-          <div className={`text-3xl font-bold tabular-nums ${getScoreColor(scorePercent)}`}>
+          <div className={`text-3xl sm:text-4xl font-bold font-mono tabular-nums ${getScoreTextColor(scorePercent)}`}>
             {scorePercent}%
           </div>
         </div>
-        {/* Score bar */}
-        <div className="mt-4 h-2 rounded-full bg-zinc-800 overflow-hidden">
+
+        <div className="mt-4 h-2 rounded-none bg-slate-200 dark:bg-white/10 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${getBarColor(scorePercent)}`}
+            className={`h-full rounded-none transition-all ${getBarColor(scorePercent)}`}
             style={{ width: `${scorePercent}%` }}
           />
         </div>
-        <p className="mt-3 text-xs text-zinc-500">
+
+        <p className="mt-4 text-xs text-slate-500 dark:text-zinc-400 font-sans leading-relaxed">
           {scorePercent >= 70
-            ? "This project is critical infrastructure — widely used, actively maintained, and embedded in the ecosystem."
+            ? "This project qualifies as critical infrastructure — high commit velocity, healthy maintainer distribution, and ecosystem dependency."
             : scorePercent >= 40
-            ? "This project has meaningful usage and is worth funding."
-            : "This project is still growing. It may qualify for smaller grants or early-stage funding."}
+            ? "This project maintains solid active usage and qualifies for open source grant funds."
+            : "This project is developing. Eligible for micro-grants and incubator funding programs."}
         </p>
       </div>
 
-      {/* Matches */}
+      {/* Matched grant list */}
       {matches.length > 0 && (
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-4">
-            Funding Matches ({matches.length})
-          </h2>
+          <div className="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-400 mb-4">
+            // Matched Grants ({matches.length})
+          </div>
           <div className="space-y-3">
             {matches.map((match: any) => (
               <div
                 key={match.match_score + match.funders.name}
-                className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4"
+                className="rounded-none border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0e0e12] backdrop-blur-xl p-5 shadow-sm dark:shadow-none"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-zinc-100">
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white font-sans">
                       {match.funders.name}
                     </h3>
-                    <p className="mt-0.5 text-xs text-zinc-500">
+                    <p className="mt-0.5 font-mono text-xs text-emerald-400 font-bold">
                       {match.funders.amount_range}
                     </p>
-                    <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
+                    <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400 leading-relaxed font-sans">
                       {match.match_reasoning}
                     </p>
                   </div>
-                  <div className={`text-lg font-bold tabular-nums shrink-0 ${getMatchScoreColor(match.match_score)}`}>
+                  <div className={`text-xl font-bold font-mono tabular-nums shrink-0 ${getMatchScoreColor(match.match_score)}`}>
                     {match.match_score}
                   </div>
                 </div>
@@ -173,16 +165,16 @@ export default async function PublicRepoPage({ params }: Props) {
         </div>
       )}
 
-      {/* CTA */}
-      <div className="mt-12 rounded-lg border border-zinc-800 bg-zinc-900/30 p-6 text-center">
-        <p className="text-sm text-zinc-400">
-          Want to find funding for your own projects?
+      {/* CTA section */}
+      <div className="mt-12 rounded-none border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0e0e12] backdrop-blur-xl p-8 text-center shadow-sm dark:shadow-none">
+        <p className="text-xs text-slate-500 dark:text-zinc-400 font-sans">
+          Want to analyze your open source repositories for real funding opportunities?
         </p>
         <a
           href="/"
-          className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200 transition-colors"
+          className="mt-4 inline-flex items-center gap-2 rounded-none bg-emerald-500 border border-emerald-400 px-6 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-black hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all"
         >
-          Try OSS Funding Matcher
+          TRY OSS FUNDING MATCHER
           <ArrowRight className="h-4 w-4" />
         </a>
       </div>
@@ -190,23 +182,23 @@ export default async function PublicRepoPage({ params }: Props) {
   );
 }
 
-function getScoreColor(percent: number): string {
-  if (percent >= 70) return "text-red-400";
-  if (percent >= 50) return "text-orange-400";
-  if (percent >= 30) return "text-yellow-400";
-  return "text-zinc-400";
+function getScoreTextColor(percent: number): string {
+  if (percent >= 70) return "text-emerald-600 dark:text-emerald-400";
+  if (percent >= 50) return "text-amber-600 dark:text-amber-400";
+  if (percent >= 30) return "text-yellow-600 dark:text-yellow-400";
+  return "text-slate-500 dark:text-zinc-400";
 }
 
 function getBarColor(percent: number): string {
-  if (percent >= 70) return "bg-red-500";
-  if (percent >= 50) return "bg-orange-500";
+  if (percent >= 70) return "bg-emerald-500";
+  if (percent >= 50) return "bg-amber-500";
   if (percent >= 30) return "bg-yellow-500";
-  return "bg-zinc-500";
+  return "bg-zinc-600";
 }
 
 function getMatchScoreColor(score: number): string {
-  if (score >= 80) return "text-emerald-400";
-  if (score >= 60) return "text-blue-400";
-  if (score >= 40) return "text-yellow-400";
-  return "text-zinc-500";
+  if (score >= 80) return "text-emerald-600 dark:text-emerald-400";
+  if (score >= 60) return "text-blue-600 dark:text-blue-400";
+  if (score >= 40) return "text-amber-600 dark:text-amber-400";
+  return "text-slate-500 dark:text-zinc-500";
 }

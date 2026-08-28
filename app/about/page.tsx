@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { BookOpen } from "lucide-react";
+import { Terminal, ShieldAlert } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "How Criticality Scoring Works — OSS Funding Matcher",
@@ -11,204 +11,192 @@ const factors = [
   {
     name: "Commit Frequency",
     weight: "25%",
-    weightValue: 0.25,
+    variable: "commits",
     description:
       "Commits in the last 90 days. Active maintenance is the strongest signal that a project is alive and being improved.",
     why:
-      "Projects with regular commits are actively maintained, meaning funding has immediate impact. A project with 500+ commits in 90 days is likely critical infrastructure.",
+      "Projects with regular commits are actively maintained, meaning funding has immediate impact.",
     example: "linux kernel: ~3000 commits/90d → high score",
-    color: "bg-emerald-500",
+    colorBg: "bg-emerald-500",
+    colorText: "text-emerald-400",
   },
   {
     name: "Contributor Count",
     weight: "20%",
-    weightValue: 0.20,
+    variable: "contributors",
     description:
       "Number of distinct contributors. More contributors = healthier project with shared ownership.",
     why:
-      "A project with 100+ contributors can't be easily abandoned. It's embedded in many people's workflows, making it critical infrastructure.",
+      "A project with 100+ contributors is embedded in many workflows, making it critical infrastructure.",
     example: "1 contributor = fragile, 50+ = resilient",
-    color: "bg-blue-500",
+    colorBg: "bg-blue-500",
+    colorText: "text-blue-400",
   },
   {
     name: "Recent Activity",
     weight: "20%",
-    weightValue: 0.20,
+    variable: "recency",
     description:
       "Time since the last push. Recent activity indicates the project is actively maintained.",
     why:
-      "A project last updated 2 years ago might be abandoned, even if it has many stars. Recency matters more than total volume.",
-    example: "Updated yesterday → 1.0, Updated 6 months ago → ~0.5",
-    color: "bg-violet-500",
+      "A project last updated 2 years ago might be abandoned, even if it has high lifetime stars.",
+    example: "Updated yesterday → 1.0, 6 months ago → ~0.5",
+    colorBg: "bg-violet-500",
+    colorText: "text-violet-400",
   },
   {
     name: "Project Age",
     weight: "15%",
-    weightValue: 0.15,
+    variable: "age",
     description:
-      "Time since project creation. Older, still-active projects are more embedded in the ecosystem.",
+      "Time since project creation. Older, still-active projects are deeply embedded in the ecosystem.",
     why:
-      "A 10-year-old project that's still actively maintained is deeply embedded. It's likely depended on by thousands of other projects.",
-    example: "10+ years old + still active = highly embedded",
-    color: "bg-amber-500",
+      "A 10-year-old project that's still actively maintained is depended on by thousands of projects.",
+    example: "10+ years old + active = high stability",
+    colorBg: "bg-amber-500",
+    colorText: "text-amber-400",
   },
   {
     name: "Issue Activity",
     weight: "10%",
-    weightValue: 0.10,
+    variable: "issues",
     description:
-      "Open issues as a proxy for community engagement. More issues = more people using and reporting on the project.",
+      "Open issues as a proxy for community engagement and active user feedback.",
     why:
-      "Issues indicate people are actively using the project, finding edge cases, and engaging with maintainers.",
+      "Issues indicate active users finding edge cases and engaging with maintainers.",
     example: "0 issues = unused, 500+ = widely used",
-    color: "bg-orange-500",
+    colorBg: "bg-orange-500",
+    colorText: "text-orange-400",
   },
   {
     name: "Stars + Forks",
     weight: "10%",
-    weightValue: 0.10,
+    variable: "usage",
     description:
-      "Usage signal and visibility proxy. Stars indicate awareness; forks indicate active use or modification.",
+      "Usage signal and visibility proxy. Stars indicate awareness; forks indicate active use.",
     why:
-      "While stars can be gamed, combined with other signals they indicate the project is known and used. Forks are a stronger signal of actual usage.",
-    example: "10k stars + 2k forks = significant usage",
-    color: "bg-rose-500",
+      "Combined with activity signals, stars & forks confirm ecosystem adoption.",
+    example: "10k stars + 2k forks = high adoption",
+    colorBg: "bg-rose-500",
+    colorText: "text-rose-400",
   },
 ];
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-3xl px-6 py-16">
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-16 bg-transparent min-h-[calc(100vh-3.5rem)]">
       {/* Header */}
-      <div className="mb-12">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
-          How Criticality Scoring Works
+      <div className="mb-12 border-b border-slate-200 dark:border-white/10 pb-8">
+        <div className="font-mono text-xs uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-2">
+          // OpenSSF Scoring Algorithm
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white font-sans sm:text-4xl">
+          Methodology &amp; Criticality Scoring
         </h1>
-        <p className="mt-3 text-sm text-zinc-400 leading-relaxed max-w-xl">
-          We reimplement OpenSSF&apos;s published criticality scoring
-          methodology in JavaScript, using GitHub API data you already have.
-          This avoids running their Go CLI inside serverless functions.
-        </p>
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-500">
-          <BookOpen className="h-3.5 w-3.5 text-zinc-400" />
-          Based on{" "}
-          <a
-            href="https://github.com/ossf/criticality-score"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-2 hover:text-zinc-300 transition-colors"
-          >
-            OpenSSF&apos;s open methodology
-          </a>
-          , reimplemented in JS
-        </div>
-      </div>
-
-      {/* Score formula */}
-      <div className="mb-12 rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-4">
-          Formula
-        </h2>
-        <div className="font-mono text-sm text-zinc-300 leading-relaxed">
-          <span className="text-zinc-500">score</span> ={" "}
-          <span className="text-emerald-400">commits</span> × 0.25 +{" "}
-          <span className="text-blue-400">contributors</span> × 0.20 +{" "}
-          <span className="text-violet-400">recency</span> × 0.20 +{" "}
-          <span className="text-amber-400">age</span> × 0.15 +{" "}
-          <span className="text-orange-400">issues</span> × 0.10 +{" "}
-          <span className="text-rose-400">usage</span> × 0.10
-        </div>
-        <p className="mt-4 text-xs text-zinc-500 leading-relaxed">
-          Each factor is normalized to 0–1 using a log scale to prevent extreme
-          outliers from dominating. The weighted sum produces a final score
-          between 0.0 and 1.0.
+        <p className="mt-3 text-sm text-slate-500 dark:text-zinc-400 leading-relaxed max-w-2xl font-sans">
+          We reimplement OpenSSF&apos;s published criticality scoring algorithm in high-performance JavaScript for serverless execution using standard GitHub API endpoints.
         </p>
       </div>
 
-      {/* Factor breakdown */}
-      <div className="space-y-6">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-          Factor Breakdown
-        </h2>
-        {factors.map((factor, i) => (
-          <div
-            key={factor.name}
-            className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-5"
-          >
-            <div className="flex items-start gap-4">
-              <div className="flex flex-col items-center gap-1 shrink-0">
-                <div className={`h-2 w-2 rounded-full ${factor.color}`} />
-                {i < factors.length - 1 && (
-                  <div className="w-px h-full min-h-[40px] bg-zinc-800" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-zinc-100">
-                    {factor.name}
-                  </h3>
-                  <span className="inline-flex items-center rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+      {/* Formula block: Square-cornered IDE Code Editor Block */}
+      <div className="mb-12 rounded-none border border-slate-200 dark:border-white/10 bg-slate-900 dark:bg-[#060608] p-6 shadow-2xl relative overflow-hidden">
+        <div className="flex items-center gap-2 justify-between border-b border-white/10 pb-3 mb-4">
+          <div className="flex items-center gap-2">
+            <Terminal className="h-4 w-4 text-emerald-400" />
+            <span className="font-mono text-xs font-semibold uppercase tracking-widest text-zinc-400">
+              criticality_score.ts
+            </span>
+          </div>
+          <span className="font-mono text-[10px] uppercase text-zinc-600">
+            [ LOG-NORMALIZED WEIGHTED SUM ]
+          </span>
+        </div>
+
+        <pre className="font-mono text-xs sm:text-sm text-zinc-300 overflow-x-auto leading-relaxed p-2">
+          <code>
+            <span className="text-zinc-500">// Formula definition</span>
+            {"\n"}
+            <span className="text-purple-400">const</span> <span className="text-emerald-400">criticalityScore</span> = (
+            {"\n"}  <span className="text-emerald-400">commits</span> * <span className="text-emerald-300">0.25</span> +{" "}
+            <span className="text-blue-400">contributors</span> * <span className="text-blue-300">0.20</span> +{" "}
+            <span className="text-violet-400">recency</span> * <span className="text-violet-300">0.20</span> +
+            {"\n"}  <span className="text-amber-400">age</span> * <span className="text-amber-300">0.15</span> +{" "}
+            <span className="text-orange-400">issues</span> * <span className="text-orange-300">0.10</span> +{" "}
+            <span className="text-rose-400">usage</span> * <span className="text-rose-300">0.10</span>
+            {"\n"});
+          </code>
+        </pre>
+
+        <p className="mt-4 text-xs text-zinc-500 font-sans border-t border-white/10 pt-4 leading-relaxed">
+          Each raw metric is log-scaled prior to weighting to prevent extreme outliers (e.g. mega-repos) from skewing normalized distributions. Output score ranges strictly from 0.00 to 1.00.
+        </p>
+      </div>
+
+      {/* Factor breakdown: 2-Column Square Card Grid */}
+      <div className="mb-12">
+        <div className="font-mono text-xs uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-6">
+          // Parameter Breakdown Matrix
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {factors.map((factor) => (
+            <div
+              key={factor.name}
+              className="rounded-none border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0e0e12] backdrop-blur-xl p-5 hover:border-slate-300 dark:hover:border-white/20 transition-all flex flex-col justify-between shadow-sm dark:shadow-none"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {/* Square indicator dot */}
+                    <div className={`h-2.5 w-2.5 rounded-none ${factor.colorBg}`} />
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white font-sans">
+                      {factor.name}
+                    </h3>
+                  </div>
+                  <span className="font-mono text-xs font-bold text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-white/10 px-2 py-0.5 rounded-none bg-slate-50 dark:bg-white/[0.03]">
                     {factor.weight}
                   </span>
                 </div>
-                <p className="mt-1.5 text-sm text-zinc-400 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed font-sans">
                   {factor.description}
                 </p>
-                <p className="mt-2 text-xs text-zinc-500 leading-relaxed">
+                <p className="mt-2 text-xs text-slate-400 dark:text-zinc-500 leading-relaxed font-sans">
                   {factor.why}
                 </p>
-                <div className="mt-2 inline-flex items-center gap-1.5 rounded bg-zinc-800/50 px-2 py-1 text-[10px] text-zinc-500 font-mono">
-                  {factor.example}
-                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-200 dark:border-white/10">
+                <span className="font-mono text-[10px] text-slate-400 dark:text-zinc-500 block">
+                  EXAMPLE: <span className="text-slate-600 dark:text-zinc-400">{factor.example}</span>
+                </span>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* Limitations */}
-      <div className="mt-12 rounded-lg border border-yellow-900/30 bg-yellow-950/10 p-6">
-        <h2 className="text-sm font-semibold text-yellow-400 mb-3">
-          Known Limitations
-        </h2>
-        <ul className="space-y-2 text-sm text-zinc-400 leading-relaxed">
+      {/* Limitations Block */}
+      <div className="rounded-none border border-amber-500/30 bg-amber-50 dark:bg-amber-500/[0.03] p-6">
+        <div className="flex items-center gap-2 mb-3">
+          <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <h2 className="font-mono text-xs font-semibold uppercase tracking-widest text-amber-700 dark:text-amber-400">
+            Methodology Boundaries &amp; Constraints
+          </h2>
+        </div>
+        <ul className="space-y-3 font-sans text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
           <li className="flex items-start gap-2">
-            <span className="text-yellow-500 mt-0.5">•</span>
+            <span className="font-mono text-amber-600 dark:text-amber-400 select-none">[!]</span>
             <span>
-              <strong className="text-zinc-300">Stars can be gamed.</strong>{" "}
-              We use them as one factor among six, weighted at only 10%. A repo
-              with 10k stars but 0 commits in 90 days will still score low.
+              <strong className="text-slate-800 dark:text-zinc-200">Stars are down-weighted (10%):</strong> Stars alone can be inflated by social trends. We require active commit cadence and contributor volume for high scores.
             </span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-yellow-500 mt-0.5">•</span>
+            <span className="font-mono text-amber-600 dark:text-amber-400 select-none">[!]</span>
             <span>
-              <strong className="text-zinc-300">Dependents are hard to measure for free.</strong>{" "}
-              GitHub&apos;s dependency graph API has limitations. We approximate
-              with stars/forks as a usage proxy. This is documented openly.
-            </span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-yellow-500 mt-0.5">•</span>
-            <span>
-              <strong className="text-zinc-300">Not a perfect measure of &ldquo;criticality.&rdquo;</strong>{" "}
-              This is a heuristic. Real criticality involves factors we can&apos;t
-              measure from the GitHub API alone (e.g., supply chain position).
+              <strong className="text-slate-800 dark:text-zinc-200">Public metadata only:</strong> Scoring relies strictly on public GitHub API endpoints — private downstream dependencies are approximated via stars and forks.
             </span>
           </li>
         </ul>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-12 text-center">
-        <a
-          href="https://github.com/ossf/criticality-score"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors underline underline-offset-2"
-        >
-          View the original OpenSSF methodology →
-        </a>
       </div>
     </div>
   );

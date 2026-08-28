@@ -101,11 +101,22 @@ export async function POST(request: NextRequest) {
         .select("*, funders(name, description, amount_range, application_type, application_url, focus_tags)")
         .single();
 
-      storedMatches.push(stored);
+      if (stored) {
+        storedMatches.push(stored);
+      }
+    }
+
+    let noMatchExplanation = null;
+    if (storedMatches.length === 0) {
+      const scorePercent = Math.round((repo.criticality_score ?? 0) * 100);
+      const tierLabel = scorePercent >= 50 ? "Critical" : scorePercent >= 30 ? "Moderate" : "Developing";
+      noMatchExplanation = `Evaluated ${repo.github_full_name} against all ${funders.length} active funding programs. With an OpenSSF Criticality Score of ${scorePercent}% (${tierLabel} Tier), no program reached the minimum 40% compatibility threshold. Active programs currently prioritize projects with higher criticality scores (>50%) or specific specialized domain focus tags.`;
     }
 
     return NextResponse.json({
       matches: storedMatches,
+      no_match_explanation: noMatchExplanation,
+      has_run: true,
       provider,
     });
   } catch (err) {
@@ -152,16 +163,11 @@ Return ONLY valid JSON, no markdown, no explanation.`;
 
 function parseMatchResponse(content: string): MatchResult[] {
   try {
-    // Strip markdown code fences if present
     let cleaned = content.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-    // Extract array portion
     const match = cleaned.match(/\[[\s\S]*\]/);
     if (match) {
       cleaned = match[0];
     }
-
-    // Fix trailing commas before closing brackets or braces
     cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
 
     const parsed = JSON.parse(cleaned);
