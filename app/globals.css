@@ -1,44 +1,127 @@
 @import "tailwindcss";
 
-/* Default: dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #18181b;
-  --card-border: #27272a;
-  --muted: #71717a;
-  --muted-fg: #a1a1aa;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --muted: #475569;
+  --card-bg: #ffffff;
+  --card-hover: #f1f5f9;
+  --border-color: rgba(15, 23, 42, 0.12);
+  --accent-emerald: #16a34a;
+  --accent-violet: #7c3aed;
+  --warning-amber: #d97706;
+  --nav-bg: rgba(255, 255, 255, 0.95);
+  --grid-line: rgba(15, 23, 42, 0.06);
+}
+
+.dark {
+  --background: #0a0a0d;
+  --foreground: #f5f5f5;
+  --muted: #9a9a9a;
+  --card-bg: #0e0e12;
+  --card-hover: #14141a;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --accent-emerald: #22c55e;
+  --accent-violet: #8b5cf6;
+  --warning-amber: #eab308;
+  --nav-bg: rgba(10, 10, 13, 0.95);
+  --grid-line: rgba(34, 197, 94, 0.16);
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Light mode overrides */
-.light {
-  --background: #ffffff;
-  --foreground: #09090b;
-  --card: #f4f4f5;
-  --card-border: #e4e4e7;
-  --muted: #71717a;
-  --muted-fg: #52525b;
+/* Moving Grid animation for Hero & Global background */
+@keyframes gridDrift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 72px 72px;
+  }
 }
 
-.light body,
-.light {
-  background: var(--background);
-  color: var(--foreground);
+.animate-grid-drift {
+  background-image: 
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 36px 36px;
+  animation: gridDrift 20s linear infinite;
 }
 
-/* Smooth theme transitions */
-* {
-  transition-property: background-color, border-color, color;
-  transition-duration: 150ms;
-  transition-timing-function: ease-in-out;
+/* Ambient Radial Blobs Animation */
+@keyframes floatBlob1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(50px, -40px) scale(1.2);
+    opacity: 0.5;
+  }
 }
 
-/* Prevent transition on initial load */
-.no-transition * {
-  transition: none !important;
+@keyframes floatBlob2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate(-50px, 40px) scale(1.15);
+    opacity: 0.4;
+  }
+}
+
+.animate-blob-1 {
+  animation: floatBlob1 14s ease-in-out infinite;
+}
+
+.animate-blob-2 {
+  animation: floatBlob2 18s ease-in-out infinite;
+}
+
+/* Particle animations */
+@keyframes particleFloat1 {
+  0% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-120px) scale(0.6);
+    opacity: 0;
+  }
+}
+
+@keyframes particleFloat2 {
+  0% {
+    transform: translateY(0px) scale(0.8);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-160px) scale(0.4);
+    opacity: 0;
+  }
+}
+
+.animate-particle-1 {
+  animation: particleFloat1 7s ease-in-out infinite;
+}
+
+.animate-particle-2 {
+  animation: particleFloat2 10s ease-in-out infinite;
+}
+
+.animate-particle-3 {
+  animation: particleFloat1 12s ease-in-out infinite 3s;
 }
