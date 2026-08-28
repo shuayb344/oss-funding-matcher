@@ -1,112 +1,178 @@
 "use client";
 
 import { useSession, signIn, signOut } from "next-auth/react";
-import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useState } from "react";
 import { ThemeToggle } from "./ThemeToggle";
-import { LogOut, ShieldCheck } from "lucide-react";
-
-function GithubIcon({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-    </svg>
-  );
-}
+import { Menu, X, Shield, LayoutDashboard, Database, HelpCircle, LogIn, LogOut } from "lucide-react";
 
 export function Navbar() {
   const { data: session, status } = useSession();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetch("/api/admin/check")
-        .then((res) => res.json())
-        .then((data) => setIsAdmin(Boolean(data.isAdmin)))
-        .catch(() => setIsAdmin(false));
-    } else {
-      setIsAdmin(false);
-    }
-  }, [status]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 inset-x-0 z-50 border-b border-zinc-800 dark:border-zinc-800 light:border-zinc-200 bg-zinc-950/80 dark:bg-zinc-950/80 light:bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-        {/* Brand */}
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-sm font-semibold tracking-tight text-zinc-100 dark:text-zinc-100 light:text-zinc-900">
-            OSS Funding Matcher
+    <nav className="fixed top-0 left-0 right-0 z-50 h-14 border-b border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#0a0a0d]/95 backdrop-blur-md transition-colors">
+      <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-4 sm:px-6">
+        {/* Brand Logo */}
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="h-8 w-8 rounded-none p-0.5 border border-emerald-500/50 bg-emerald-500/10 flex items-center justify-center group-hover:border-emerald-400 transition-colors">
+            <img
+              src="/logo-transparent.png"
+              alt="FM Logo"
+              className="h-full w-full object-contain"
+            />
+          </div>
+          <span className="font-mono text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+            OSS FUNDING MATCHER
           </span>
         </Link>
 
-        {/* Left Nav Links */}
-        <div className="flex items-center gap-5">
+        {/* Desktop Navigation Links */}
+        <div className="hidden md:flex items-center gap-6 font-mono text-xs">
           <Link
             href="/about"
-            className="text-sm text-zinc-400 hover:text-zinc-100 dark:hover:text-zinc-100 light:hover:text-zinc-900 transition-colors"
+            className="text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors uppercase"
           >
-            How it works
+            HOW IT WORKS
           </Link>
           <Link
             href="/funders"
-            className="text-sm text-zinc-400 hover:text-zinc-100 dark:hover:text-zinc-100 light:hover:text-zinc-900 transition-colors"
+            className="text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors uppercase"
           >
-            Funders
+            FUNDERS
           </Link>
-
           {status === "authenticated" && (
             <Link
               href="/dashboard"
-              className="text-sm text-zinc-400 dark:text-zinc-400 light:text-zinc-500 hover:text-zinc-100 dark:hover:text-zinc-100 light:hover:text-zinc-900 transition-colors"
+              className="text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors uppercase"
             >
-              Dashboard
+              DASHBOARD
             </Link>
           )}
 
-          {isAdmin && (
+          {/* Exclusive Admin Link */}
+          {session?.user?.id === process.env.NEXT_PUBLIC_ADMIN_GITHUB_ID && (
             <Link
               href="/admin/funders"
-              className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-100 dark:hover:text-zinc-100 light:hover:text-zinc-900 transition-colors"
+              className="inline-flex items-center gap-1.5 border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all font-mono text-[11px] uppercase tracking-wider font-semibold"
             >
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-              Admin
+              <Shield className="h-3.5 w-3.5" />
+              ADMIN
+            </Link>
+          )}
+        </div>
+
+        {/* Right Action Menu */}
+        <div className="hidden sm:flex items-center gap-3 font-mono text-xs">
+          <ThemeToggle />
+
+          {status === "loading" ? (
+            <div className="h-8 w-24 rounded-none bg-slate-200 dark:bg-white/5 animate-pulse" />
+          ) : status === "authenticated" ? (
+            <div className="flex items-center gap-3">
+              {session.user?.image ? (
+                <img
+                  src={session.user.image}
+                  alt={session.user.name || "User"}
+                  className="h-7 w-7 rounded-none border border-slate-300 dark:border-white/20 object-cover"
+                />
+              ) : (
+                <div className="h-7 w-7 rounded-none bg-violet-600 text-white flex items-center justify-center font-bold text-xs">
+                  {session.user?.name?.[0] || "U"}
+                </div>
+              )}
+              <button
+                onClick={() => signOut()}
+                className="inline-flex items-center gap-1.5 border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/[0.03] px-3 py-1.5 text-slate-700 dark:text-zinc-300 hover:border-slate-400 dark:hover:border-white/30 hover:text-slate-900 dark:hover:text-white transition-all uppercase text-[11px]"
+              >
+                <LogOut className="h-3 w-3" />
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => signIn("github")}
+              className="inline-flex items-center gap-1.5 border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all uppercase font-semibold text-[11px]"
+            >
+              <LogIn className="h-3 w-3" />
+              Sign in
+            </button>
+          )}
+        </div>
+
+        {/* Mobile Controls */}
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-1.5 rounded-none border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/[0.03] text-slate-700 dark:text-zinc-300"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a0a0d] px-4 py-4 space-y-3 font-mono text-xs transition-colors shadow-lg">
+          <Link
+            href="/about"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-2 text-slate-700 dark:text-zinc-300 py-1"
+          >
+            <HelpCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            HOW IT WORKS
+          </Link>
+          <Link
+            href="/funders"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-2 text-slate-700 dark:text-zinc-300 py-1"
+          >
+            <Database className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            FUNDERS DIRECTORY
+          </Link>
+          {status === "authenticated" && (
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2 text-slate-700 dark:text-zinc-300 py-1"
+            >
+              <LayoutDashboard className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              DASHBOARD
             </Link>
           )}
 
-          {/* User profile & actions + ThemeToggle at the very end */}
-          <div className="flex items-center gap-3 pl-2 border-l border-zinc-800">
+          {session?.user?.id === process.env.NEXT_PUBLIC_ADMIN_GITHUB_ID && (
+            <Link
+              href="/admin/funders"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 py-1 font-bold"
+            >
+              <Shield className="h-4 w-4" />
+              ADMIN CONTROL PANEL
+            </Link>
+          )}
+
+          <div className="pt-2 border-t border-slate-200 dark:border-white/10">
             {status === "authenticated" ? (
-              <div className="flex items-center gap-3">
-                {session.user?.image && (
-                  <img
-                    src={session.user.image}
-                    alt=""
-                    className="h-6 w-6 rounded-full"
-                  />
-                )}
-                <button
-                  onClick={() => signOut()}
-                  className="inline-flex items-center gap-1 rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 transition-colors"
-                >
-                  <LogOut className="h-3 w-3" />
-                  Sign out
-                </button>
-              </div>
+              <button
+                onClick={() => signOut()}
+                className="w-full text-left py-1 text-red-500 font-bold uppercase"
+              >
+                SIGN OUT ({session.user?.name})
+              </button>
             ) : (
               <button
                 onClick={() => signIn("github")}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200 transition-colors"
+                className="w-full text-left py-1 text-emerald-600 dark:text-emerald-400 font-bold uppercase"
               >
-                <GithubIcon className="h-4 w-4 text-zinc-900" />
-                Sign in
+                SIGN IN WITH GITHUB
               </button>
             )}
-
-            {/* Theme Toggle at the very end */}
-            <ThemeToggle />
           </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 }

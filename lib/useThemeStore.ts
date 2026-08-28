@@ -17,10 +17,25 @@ function applyThemeClass(theme: ThemeMode) {
   }
 }
 
+function getInitialTheme(): ThemeMode {
+  if (typeof window !== "undefined") {
+    if (document.documentElement.classList.contains("light")) return "light";
+    if (document.documentElement.classList.contains("dark")) return "dark";
+    try {
+      const stored = localStorage.getItem("oss-funding-theme");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.state?.theme) return parsed.state.theme;
+      }
+    } catch (e) {}
+  }
+  return "dark";
+}
+
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      theme: "dark",
+      theme: getInitialTheme(),
       setTheme: (theme: ThemeMode) => {
         applyThemeClass(theme);
         set({ theme });
