@@ -24,7 +24,7 @@ export interface GitHubRepo {
 
 /**
  * Fetch all public repos for a user (paginated).
- * Requires a GitHub token with `repo` scope.
+ * Requires a GitHub token with `public_repo` scope.
  */
 export async function fetchUserRepos(
   accessToken: string,
