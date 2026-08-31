@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, ExternalLink, MapPin } from "lucide-react";
+import { Search, ExternalLink, MapPin, Plus, X, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 
 interface Funder {
   id: string;
@@ -34,6 +34,18 @@ export default function FundersPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
 
+  // Suggest Funder Modal State
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [suggestName, setSuggestName] = useState("");
+  const [suggestUrl, setSuggestUrl] = useState("");
+  const [suggestDescription, setSuggestDescription] = useState("");
+  const [suggestTags, setSuggestTags] = useState<string[]>([]);
+  const [suggestTagInput, setSuggestTagInput] = useState("");
+  const [suggestNotes, setSuggestNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submittedSuccess, setSubmittedSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const { data: funders = [], isLoading: loading } = useQuery<Funder[]>({
     queryKey: ["funders"],
     queryFn: () =>
@@ -47,7 +59,7 @@ export default function FundersPage() {
       !search ||
       f.name.toLowerCase().includes(search.toLowerCase()) ||
       f.description?.toLowerCase().includes(search.toLowerCase()) ||
-      f.focus_tags.some((t) =>
+      f.focus_tags?.some((t) =>
         t.toLowerCase().includes(search.toLowerCase())
       );
     const matchesType =
@@ -57,19 +69,88 @@ export default function FundersPage() {
 
   const types = ["all", ...new Set(funders.map((f) => f.application_type))];
 
+  const handleAddTag = () => {
+    const tag = suggestTagInput.trim().toLowerCase();
+    if (tag && !suggestTags.includes(tag)) {
+      setSuggestTags([...suggestTags, tag]);
+      setSuggestTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setSuggestTags(suggestTags.filter((t) => t !== tag));
+  };
+
+  const handleResetForm = () => {
+    setSuggestName("");
+    setSuggestUrl("");
+    setSuggestDescription("");
+    setSuggestTags([]);
+    setSuggestTagInput("");
+    setSuggestNotes("");
+    setSubmittedSuccess(false);
+    setSubmitError(null);
+  };
+
+  const handleSubmitSuggestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!suggestName.trim() || !suggestUrl.trim()) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const res = await fetch("/api/funders/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: suggestName,
+          application_url: suggestUrl,
+          description: suggestDescription,
+          focus_tags: suggestTags,
+          notes: suggestNotes,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setSubmittedSuccess(true);
+      } else {
+        setSubmitError(data.error || "Failed to submit funder suggestion.");
+      }
+    } catch (err: any) {
+      setSubmitError(err?.message || "An unexpected error occurred.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-10 bg-transparent min-h-[calc(100vh-3.5rem)]">
       {/* Header */}
-      <div className="mb-8 border-b border-slate-200 dark:border-white/10 pb-6">
-        <div className="font-mono text-xs uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">
-          // Verified Funder Registry
+      <div className="mb-8 border-b border-slate-200 dark:border-white/10 pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <div className="font-mono text-xs uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">
+            // Verified Funder Registry
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-sans sm:text-3xl">
+            Active Funding Programs
+          </h1>
+          <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400 font-mono">
+            DIRECTORIES OF GRANTS, SPONSORSHIP FUNDS &amp; OPEN SOURCE STIPENDS
+          </p>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-sans sm:text-3xl">
-          Active Funding Programs
-        </h1>
-        <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400 font-mono">
-          DIRECTORIES OF GRANTS, SPONSORSHIP FUNDS &amp; OPEN SOURCE STIPENDS
-        </p>
+
+        <button
+          onClick={() => {
+            handleResetForm();
+            setShowSuggestModal(true);
+          }}
+          className="inline-flex items-center justify-center gap-2 rounded-none bg-emerald-500 border border-emerald-400 px-4 py-2 font-mono text-xs font-semibold text-black hover:bg-emerald-400 hover:shadow-[0_0_12px_rgba(34,197,94,0.3)] transition-all shrink-0"
+        >
+          <Sparkles className="h-4 w-4" /> SUGGEST A FUNDER
+        </button>
       </div>
 
       {/* Filters & Search */}
@@ -187,6 +268,188 @@ export default function FundersPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Suggest a Funder Modal */}
+      {showSuggestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-none border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0c0c10] p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3 mb-5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-500" />
+                <h2 className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                  [ SUGGEST A FUNDING PROGRAM ]
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowSuggestModal(false)}
+                className="text-slate-400 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {submittedSuccess ? (
+              <div className="py-6 text-center space-y-4">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-none border border-emerald-500/40 bg-emerald-500/10 text-emerald-400">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white font-sans">
+                  Suggestion Received!
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed font-sans">
+                  Thank you for contributing to the community! Your funder suggestion has been submitted for moderation and will appear in the matcher once verified by an admin.
+                </p>
+                <div className="pt-4 flex items-center justify-center gap-3 font-mono text-xs">
+                  <button
+                    onClick={handleResetForm}
+                    className="rounded-none border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.05] px-4 py-2 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white"
+                  >
+                    Suggest Another
+                  </button>
+                  <button
+                    onClick={() => setShowSuggestModal(false)}
+                    className="rounded-none bg-emerald-500 border border-emerald-400 px-4 py-2 font-semibold text-black hover:bg-emerald-400"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitSuggestion} className="space-y-4 font-sans text-xs">
+                {submitError && (
+                  <div className="p-3 border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400 font-mono text-xs">
+                    {submitError}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-700 dark:text-zinc-400 mb-1">
+                    Funder / Program Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={suggestName}
+                    onChange={(e) => setSuggestName(e.target.value)}
+                    placeholder="e.g. Sovereign Tech Fund, Python Foundation Grant"
+                    className="w-full rounded-none border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-black/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-700 dark:text-zinc-400 mb-1">
+                    Application / Info URL <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    value={suggestUrl}
+                    onChange={(e) => setSuggestUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full rounded-none border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-black/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-700 dark:text-zinc-400 mb-1">
+                    Short Description
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={suggestDescription}
+                    onChange={(e) => setSuggestDescription(e.target.value)}
+                    placeholder="Briefly describe what open source projects or categories this funder supports..."
+                    className="w-full rounded-none border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-black/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans resize-y"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-700 dark:text-zinc-400 mb-1">
+                    Focus Areas / Tags
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={suggestTagInput}
+                      onChange={(e) => setSuggestTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                      placeholder="e.g. security, python, europe"
+                      className="flex-1 rounded-none border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-black/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddTag}
+                      className="rounded-none border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] px-4 py-2 font-mono text-xs text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white"
+                    >
+                      ADD
+                    </button>
+                  </div>
+                  {suggestTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2.5">
+                      {suggestTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1.5 rounded-none border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] px-2 py-0.5 font-mono text-[10px] uppercase text-slate-700 dark:text-zinc-300"
+                        >
+                          #{tag}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="text-slate-400 dark:text-zinc-500 hover:text-red-500"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-700 dark:text-zinc-400 mb-1">
+                    Optional Notes
+                  </label>
+                  <input
+                    type="text"
+                    value={suggestNotes}
+                    onChange={(e) => setSuggestNotes(e.target.value)}
+                    placeholder="e.g. non-US maintainers only, annual deadline in Oct, nomination-based"
+                    className="w-full rounded-none border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-black/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-white/10 font-mono text-xs">
+                  <button
+                    type="submit"
+                    disabled={submitting || !suggestName.trim() || !suggestUrl.trim()}
+                    className="inline-flex items-center gap-2 rounded-none bg-emerald-500 border border-emerald-400 px-5 py-2 font-semibold text-black hover:bg-emerald-400 transition-all disabled:opacity-50"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> SUBMITTING…
+                      </>
+                    ) : (
+                      "SUBMIT SUGGESTION"
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowSuggestModal(false)}
+                    className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors uppercase tracking-wider"
+                  >
+                    CANCEL
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
       )}
     </div>
