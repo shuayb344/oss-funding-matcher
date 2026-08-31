@@ -55,7 +55,10 @@ CREATE POLICY "Allow authenticated read access to pitches" ON public.pitches
   FOR SELECT TO authenticated, service_role
   USING (true);
 
--- ------------------------------------------------------------
--- ACCOUNTS: Strictly restricted to service_role (No RLS policies for anon/authenticated)
--- ------------------------------------------------------------
--- (No policies created for anon or authenticated; access completely denied via API)
+ALTER TABLE public.funder_suggestions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public insert access to funder suggestions" ON public.funder_suggestions;
+CREATE POLICY "Allow public insert access to funder suggestions" ON public.funder_suggestions
+  FOR INSERT TO anon, authenticated
+  WITH CHECK (true);
+

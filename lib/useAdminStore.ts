@@ -12,6 +12,22 @@ export interface Funder {
   region_restriction: string | null;
 }
 
+export interface FunderSuggestion {
+  id: string;
+  submitted_by: string | null;
+  name: string;
+  description: string | null;
+  application_url: string;
+  focus_tags: string[];
+  notes: string | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  users?: {
+    username: string;
+    avatar_url: string | null;
+  } | null;
+}
+
 export type FunderFormData = Omit<Funder, "id">;
 
 export const EMPTY_FUNDER: FunderFormData = {
@@ -27,16 +43,31 @@ export const EMPTY_FUNDER: FunderFormData = {
 
 interface AdminStore {
   isAdmin: boolean | null;
+  activeTab: "funders" | "suggestions";
   funders: Funder[];
+  suggestions: FunderSuggestion[];
   loading: boolean;
+  loadingSuggestions: boolean;
+  processingSuggestionId: string | null;
+  lastModerationResult: {
+    id: string;
+    success: boolean;
+    message: string;
+    copiedToFunders?: boolean;
+  } | null;
   saving: boolean;
   showForm: boolean;
   editing: Funder | null;
   formData: FunderFormData;
   tagInput: string;
 
+  setActiveTab: (tab: "funders" | "suggestions") => void;
   checkAdmin: () => Promise<void>;
   fetchFunders: () => Promise<void>;
+  fetchSuggestions: () => Promise<void>;
+  approveSuggestion: (id: string) => Promise<boolean>;
+  rejectSuggestion: (id: string) => Promise<boolean>;
+
   openCreateForm: () => void;
   openEditForm: (funder: Funder) => void;
   closeForm: () => void;
@@ -50,13 +81,20 @@ interface AdminStore {
 
 export const useAdminStore = create<AdminStore>((set, get) => ({
   isAdmin: null,
+  activeTab: "funders",
   funders: [],
+  suggestions: [],
   loading: true,
+  loadingSuggestions: false,
+  processingSuggestionId: null,
+  lastModerationResult: null,
   saving: false,
   showForm: false,
   editing: null,
   formData: EMPTY_FUNDER,
   tagInput: "",
+
+  setActiveTab: (tab) => set({ activeTab: tab }),
 
   checkAdmin: async () => {
     try {
@@ -65,7 +103,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       const isAdmin = Boolean(data.isAdmin);
       set({ isAdmin });
       if (isAdmin) {
-        await get().fetchFunders();
+        await Promise.all([get().fetchFunders(), get().fetchSuggestions()]);
       } else {
         set({ loading: false });
       }
@@ -84,6 +122,108 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       set({ funders: [] });
     } finally {
       set({ loading: false });
+    }
+  },
+
+  fetchSuggestions: async () => {
+    set({ loadingSuggestions: true });
+    try {
+      const res = await fetch("/api/admin/suggestions");
+      const data = await res.json();
+      set({ suggestions: data.suggestions || [] });
+    } catch {
+      set({ suggestions: [] });
+    } finally {
+      set({ loadingSuggestions: false });
+    }
+  },
+
+  approveSuggestion: async (id: string) => {
+    set({ processingSuggestionId: id, lastModerationResult: null });
+    try {
+      const res = await fetch("/api/admin/suggestions/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action: "approve" }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        set({
+          lastModerationResult: {
+            id,
+            success: true,
+            message: data.message,
+            copiedToFunders: data.copiedToFunders,
+          },
+        });
+        await Promise.all([get().fetchSuggestions(), get().fetchFunders()]);
+        return true;
+      } else {
+        set({
+          lastModerationResult: {
+            id,
+            success: false,
+            message: data.error || "Failed to approve suggestion.",
+          },
+        });
+        return false;
+      }
+    } catch (err: any) {
+      set({
+        lastModerationResult: {
+          id,
+          success: false,
+          message: err?.message || "Error approving suggestion.",
+        },
+      });
+      return false;
+    } finally {
+      set({ processingSuggestionId: null });
+    }
+  },
+
+  rejectSuggestion: async (id: string) => {
+    set({ processingSuggestionId: id, lastModerationResult: null });
+    try {
+      const res = await fetch("/api/admin/suggestions/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action: "reject" }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        set({
+          lastModerationResult: {
+            id,
+            success: true,
+            message: "Suggestion rejected.",
+          },
+        });
+        await get().fetchSuggestions();
+        return true;
+      } else {
+        set({
+          lastModerationResult: {
+            id,
+            success: false,
+            message: data.error || "Failed to reject suggestion.",
+          },
+        });
+        return false;
+      }
+    } catch (err: any) {
+      set({
+        lastModerationResult: {
+          id,
+          success: false,
+          message: err?.message || "Error rejecting suggestion.",
+        },
+      });
+      return false;
+    } finally {
+      set({ processingSuggestionId: null });
     }
   },
 

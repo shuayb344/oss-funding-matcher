@@ -2,13 +2,25 @@
 
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Menu, X, Shield, LayoutDashboard, Database, HelpCircle, LogIn, LogOut } from "lucide-react";
 
 export function Navbar() {
   const { data: session, status } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      fetch("/api/admin/check")
+        .then((res) => res.json())
+        .then((data) => setIsAdmin(Boolean(data.isAdmin)))
+        .catch(() => setIsAdmin(false));
+    } else {
+      setIsAdmin(false);
+    }
+  }, [status, session]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-14 border-b border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#0a0a0d]/95 backdrop-blur-md transition-colors">
@@ -48,7 +60,7 @@ export function Navbar() {
             </Link>
           )}
 
-          {session?.user?.id === process.env.NEXT_PUBLIC_ADMIN_GITHUB_ID && (
+          {status === "authenticated" && isAdmin && (
             <Link
               href="/admin/funders"
               className="inline-flex items-center gap-1.5 border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all font-mono text-[11px] uppercase tracking-wider font-semibold"
@@ -137,7 +149,7 @@ export function Navbar() {
             </Link>
           )}
 
-          {session?.user?.id === process.env.NEXT_PUBLIC_ADMIN_GITHUB_ID && (
+          {status === "authenticated" && isAdmin && (
             <Link
               href="/admin/funders"
               onClick={() => setMobileMenuOpen(false)}

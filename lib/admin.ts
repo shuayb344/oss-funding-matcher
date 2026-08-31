@@ -1,5 +1,13 @@
 export function isUserAdmin(userId?: string, username?: string): boolean {
-  const ADMIN_GITHUB_IDS = (process.env.ADMIN_GITHUB_IDS || "")
+  const envVars = [
+    process.env.ADMIN_GITHUB_IDS,
+    process.env.NEXT_PUBLIC_ADMIN_GITHUB_IDS,
+    process.env.NEXT_PUBLIC_ADMIN_GITHUB_ID,
+  ];
+
+  const ADMIN_GITHUB_IDS = envVars
+    .filter(Boolean)
+    .join(",")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
@@ -15,3 +23,4 @@ export function isUserAdmin(userId?: string, username?: string): boolean {
     (uName !== "" && ADMIN_GITHUB_IDS.includes(uName))
   );
 }
+

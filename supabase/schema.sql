@@ -65,6 +65,21 @@ create table if not exists funders (
 );
 
 -- ============================================================
+-- FUNDER SUGGESTIONS
+-- ============================================================
+create table if not exists funder_suggestions (
+  id uuid primary key default gen_random_uuid(),
+  submitted_by uuid references users(id),
+  name text not null,
+  description text,
+  application_url text not null,
+  focus_tags text[],
+  notes text,                    -- e.g. "region-restricted", "nomination-based"
+  status text default 'pending', -- 'pending' | 'approved' | 'rejected'
+  created_at timestamptz default now()
+);
+
+-- ============================================================
 -- MATCHES
 -- ============================================================
 create table if not exists matches (
@@ -96,6 +111,7 @@ create index if not exists idx_repos_criticality on repos(criticality_score desc
 create index if not exists idx_matches_repo_id on matches(repo_id);
 create index if not exists idx_matches_funder_id on matches(funder_id);
 create index if not exists idx_funders_application_type on funders(application_type);
+create index if not exists idx_funder_suggestions_status on funder_suggestions(status);
 
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS) & PERMISSIONS
@@ -104,6 +120,7 @@ alter table users enable row level security;
 alter table accounts enable row level security;
 alter table repos enable row level security;
 alter table funders enable row level security;
+alter table funder_suggestions enable row level security;
 alter table matches enable row level security;
 alter table pitches enable row level security;
 
@@ -113,6 +130,8 @@ grant all on table accounts to service_role, postgres;
 
 -- Public RLS Policies
 create policy "Allow public read access to funders" on funders for select to anon, authenticated using (true);
+create policy "Allow public insert access to funder suggestions" on funder_suggestions for insert to anon, authenticated with check (true);
+create policy "Allow authenticated/service_role access to funder suggestions" on funder_suggestions for select to authenticated, service_role using (true);
 create policy "Allow public read access to user profiles" on users for select to anon, authenticated using (true);
 create policy "Allow public read access to repos" on repos for select to anon, authenticated using (true);
 create policy "Allow public read access to matches" on matches for select to anon, authenticated using (true);
