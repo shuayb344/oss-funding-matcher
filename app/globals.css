@@ -125,3 +125,34 @@ body {
 .animate-particle-3 {
   animation: particleFloat1 12s ease-in-out infinite 3s;
 }
+
+/* Infinite Marquee Animation */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 40s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+

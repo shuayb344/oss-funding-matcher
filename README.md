@@ -5,8 +5,9 @@ A tool where open source maintainers connect their GitHub repo, see how critical
 ## How it works
 
 1. **Connect** — Sign in with GitHub. We fetch your repos and analyze them.
-2. **Match** — AI scores your projects against 18+ verified funding programs.
+2. **Match** — AI scores your projects against verified funding programs.
 3. **Apply** — Get a tailored pitch draft — copy, edit, and send to the funder.
+4. **Suggest** — Community members can suggest new funding programs for admin moderation.
 
 ## Tech Stack
 
@@ -17,6 +18,15 @@ A tool where open source maintainers connect their GitHub repo, see how critical
 | Database | Supabase (Postgres) | Free tier, no credit card |
 | Hosting | Vercel Hobby tier | Free, integrates natively with Next.js |
 | AI | Google AI Studio (Gemini 2.0 Flash) | Free tier, fast inference, no credit card required |
+
+## Key Features
+
+- **Infinite Marquee Strip**: Auto-scrolling horizontal wordmarks of verified grant programs.
+- **Live Database Stats**: Real-time program count and maximum grant amount calculations.
+- **OpenSSF Criticality Scoring**: Objective 0.0 to 1.0 scoring model for repository health and impact.
+- **AI Matching & Pitch Generation**: Tailored grant matching and application pitch drafts using Gemini 2.0 Flash.
+- **Community Funder Suggestions**: Submit new grant programs with automated live URL verification and admin moderation.
+- **Admin Moderation Panel**: Responsive dashboard (`/admin/funders`) for approving, editing, importing, or rejecting funder submissions.
 
 ## Criticality Scoring
 
@@ -47,6 +57,13 @@ Factors and weights:
 - **Homepage URL:** `http://localhost:3000`
 - **Authorization callback URL:** `http://localhost:3000/api/auth/callback/github`
 
+### Admin Access Configuration
+
+Add your GitHub numeric ID or username to `ADMIN_GITHUB_IDS` in `.env.local`:
+```env
+ADMIN_GITHUB_IDS="your-github-id-or-username"
+```
+
 ### AI Provider
 
 For matching and pitch generation, set up a free Google AI Studio API key:
@@ -57,36 +74,46 @@ For matching and pitch generation, set up a free Google AI Studio API key:
 ```
 oss-funding-matcher/
 ├── app/
+│   ├── admin/
+│   │   └── funders/page.tsx             # Responsive Admin dashboard & moderation
 │   ├── api/
-│   │   ├── auth/[...nextauth]/route.ts   # Auth.js handler
-│   │   ├── repos/route.ts                # Fetch user's repos
-│   │   ├── sync/route.ts                 # Sync repos from GitHub + compute scores
-│   │   ├── match/route.ts                # AI matching against funders
-│   │   ├── pitch/route.ts                # AI pitch generation
-│   │   └── session/route.ts              # Session endpoint
-│   ├── dashboard/page.tsx                # Repo list with scores
-│   ├── repo/[id]/page.tsx               # Repo detail + matches + pitches
-│   ├── error.tsx                         # Global error boundary
-│   ├── not-found.tsx                     # Custom 404
-│   ├── page.tsx                          # Landing page
-│   ├── layout.tsx                        # Root layout
+│   │   ├── admin/
+│   │   │   ├── check/route.ts           # Admin authorization endpoint
+│   │   │   └── suggestions/
+│   │   │       ├── route.ts             # Fetch suggestions
+│   │   │       └── approve/route.ts     # Moderation (live URL check & import)
+│   │   ├── auth/[...nextauth]/route.ts  # Auth.js handler
+│   │   ├── funders/
+│   │   │   ├── route.ts                 # Fetch active funders
+│   │   │   └── suggest/route.ts         # Community suggestion submission
+│   │   ├── repos/route.ts               # Fetch user's repos
+│   │   ├── sync/route.ts                # Sync repos from GitHub + compute scores
+│   │   ├── match/route.ts               # AI matching against funders
+│   │   ├── pitch/route.ts               # AI pitch generation
+│   │   └── session/route.ts             # Session endpoint
+│   ├── dashboard/page.tsx               # Repo list with scores
+│   ├── funders/page.tsx                 # Public funder list + Suggestion modal
+│   ├── repo/[id]/page.tsx              # Repo detail + matches + pitches
+│   ├── page.tsx                         # Landing page (Marquee, Stats, FAQ)
 │   └── globals.css
 ├── components/
-│   ├── Navbar.tsx                        # Shared navigation bar
-│   ├── EmptyState.tsx                    # Empty state component
-│   └── LoadingSkeleton.tsx               # Loading skeletons
+│   ├── Navbar.tsx                       # Dynamic navigation bar with Admin link
+│   ├── EmptyState.tsx                   # Empty state component
+│   └── LoadingSkeleton.tsx              # Loading skeletons
 ├── lib/
-│   ├── ai.ts                             # AI provider integration (Google AI Studio / Gemini)
-│   ├── auth.ts                           # Auth.js config
-│   ├── db.ts                             # Supabase client
-│   ├── github.ts                         # GitHub API helpers
-│   └── scoring.ts                        # Criticality score calculation
+│   ├── admin.ts                         # Admin authorization helper
+│   ├── ai.ts                            # AI provider integration (Google AI Studio / Gemini)
+│   ├── db.ts                            # Supabase client
+│   ├── github.ts                        # GitHub API helpers
+│   ├── scoring.ts                       # Criticality score calculation
+│   └── useAdminStore.ts                 # Zustand store for admin state
 ├── scripts/
-│   └── seed-funders.ts                   # Load funders into Supabase
+│   ├── seed-funders.ts                  # Load funders into Supabase
+│   └── create-suggestions-table.ts      # Database migration script
 ├── seed/
-│   └── funders.json                      # 18 verified funding programs
+│   └── funders.json                     # Verified funding programs registry
 └── supabase/
-    └── schema.sql                        # Database schema
+    └── schema.sql                       # Complete database schema & RLS rules
 ```
 
 ## API Routes
@@ -97,6 +124,11 @@ oss-funding-matcher/
 | POST | `/api/match` | AI matches a repo against all funders |
 | POST | `/api/pitch` | AI generates a tailored pitch draft |
 | GET | `/api/repos` | Fetch user's repos with scores |
+| GET | `/api/funders` | Fetch all verified funding programs |
+| POST | `/api/funders/suggest` | Submit a community funder suggestion |
+| GET | `/api/admin/check` | Verify current user admin authorization |
+| GET | `/api/admin/suggestions` | Fetch community suggestions for admin moderation |
+| POST | `/api/admin/suggestions/approve` | Approve suggestion (runs HTTP 200 check & imports) |
 
 ## Scope & Honesty
 
