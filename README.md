@@ -17,14 +17,14 @@ A tool where open source maintainers connect their GitHub repo, see how critical
 | Auth | Auth.js (NextAuth) with GitHub provider | Free, handles OAuth cleanly |
 | Database | Supabase (Postgres) | Free tier, no credit card |
 | Hosting | Vercel Hobby tier | Free, integrates natively with Next.js |
-| AI | Google AI Studio (Gemini 2.0 Flash) | Free tier, fast inference, no credit card required |
+| AI | Google AI Studio (Gemini 3.6 Flash) | Free tier, fast inference, no credit card required | AND Grok llama-3.3-70b-versatile| Free tier, fast inference, no credit card required |
 
 ## Key Features
 
 - **Infinite Marquee Strip**: Auto-scrolling horizontal wordmarks of verified grant programs.
 - **Live Database Stats**: Real-time program count and maximum grant amount calculations.
 - **OpenSSF Criticality Scoring**: Objective 0.0 to 1.0 scoring model for repository health and impact.
-- **AI Matching & Pitch Generation**: Tailored grant matching and application pitch drafts using Gemini 2.0 Flash.
+- **AI Matching & Pitch Generation**: Tailored grant matching and application pitch drafts using Gemini 3.6 Flash and Grok llama-3.3-70b-versatile.
 - **Community Funder Suggestions**: Submit new grant programs with automated live URL verification and admin moderation.
 - **Admin Moderation Panel**: Responsive dashboard (`/admin/funders`) for approving, editing, importing, or rejecting funder submissions.
 

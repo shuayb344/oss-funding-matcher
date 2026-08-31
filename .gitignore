@@ -42,4 +42,5 @@ next-env.d.ts
 
 # internal launch docs
 /launch/
-
+AGENTS.md
+CLAUDE.md

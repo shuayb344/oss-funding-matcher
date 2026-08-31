@@ -57,7 +57,7 @@ export function Footer() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[11px] text-slate-400 dark:text-zinc-500">
-          <span>Built with Next.js, Supabase &amp; Auth.js</span>
+          <span>Built with Next.js, Supabase &amp; Auth.js and AI by <a href="https://github.com/shuayb344" target="_blank" rel="noopener noreferrer">Shuayb</a></span>
           <span>Open source &middot; No tracking &middot; No ads</span>
         </div>
       </div>
