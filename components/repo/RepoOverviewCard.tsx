@@ -1,5 +1,5 @@
 import { ExternalLink, Star, GitFork, Users, Calendar } from "lucide-react";
-import { getScoreTextColor, getMatchScoreBarBg } from "@/lib/repoUtils";
+import { getScoreTextColor, getMatchScoreBarBg, getScoreTierInfo } from "@/lib/repoUtils";
 
 export interface Repo {
   id: string;
@@ -15,11 +15,11 @@ export interface Repo {
 
 export function RepoOverviewCard({ repo }: { repo: Repo }) {
   const score = repo.criticality_score ?? 0;
-  const scorePercent = Math.round(score * 100);
+  const scorePercent = Math.round(score <= 1 ? score * 100 : score);
+  const tierInfo = getScoreTierInfo(score);
 
   return (
     <div className="mb-10 rounded-none border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0e0e12] backdrop-blur-xl p-6 sm:p-8 shadow-sm dark:shadow-none transition-all">
-      {/* Header Title & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-6">
         <div>
           <div className="font-mono text-xs uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">
@@ -53,7 +53,6 @@ export function RepoOverviewCard({ repo }: { repo: Repo }) {
         </a>
       </div>
 
-      {/* OpenSSF Score Progress Bar */}
       <div className="mt-6 border-b border-slate-200 dark:border-white/10 pb-6">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
           <div className="min-w-0 flex-1">
@@ -61,12 +60,8 @@ export function RepoOverviewCard({ repo }: { repo: Repo }) {
               <span className="font-mono text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
                 OpenSSF Criticality Rating
               </span>
-              <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-none border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 uppercase">
-                {scorePercent >= 70
-                  ? "[ CRITICAL INFRASTRUCTURE ]"
-                  : scorePercent >= 40
-                  ? "[ MODERATE CRITICALITY ]"
-                  : "[ DEVELOPING TIER ]"}
+              <span className={`font-mono text-[11px] font-bold px-2 py-0.5 rounded-none border ${tierInfo.badgeBg} uppercase`}>
+                {tierInfo.fullLabel}
               </span>
             </div>
             <div className="text-[11px] text-slate-500 dark:text-zinc-500 font-mono mt-1 leading-relaxed">
@@ -75,7 +70,7 @@ export function RepoOverviewCard({ repo }: { repo: Repo }) {
           </div>
 
           <div className="flex items-baseline gap-0.5 shrink-0 font-mono self-start sm:self-auto">
-            <span className={`text-2xl sm:text-3xl font-bold tabular-nums ${getScoreTextColor(scorePercent)}`}>
+            <span className={`text-2xl sm:text-3xl font-bold tabular-nums ${tierInfo.textColor}`}>
               {scorePercent}
             </span>
             <span className="text-xs text-slate-500 dark:text-zinc-500 font-semibold">%</span>
@@ -84,13 +79,12 @@ export function RepoOverviewCard({ repo }: { repo: Repo }) {
 
         <div className="h-2.5 w-full rounded-none bg-slate-200 dark:bg-white/10 overflow-hidden">
           <div
-            className={`h-full rounded-none transition-all duration-500 ${getMatchScoreBarBg(scorePercent)}`}
+            className={`h-full rounded-none transition-all duration-500 ${tierInfo.accentBg}`}
             style={{ width: `${scorePercent}%` }}
           />
         </div>
       </div>
 
-      {/* Detailed Metric Stat Cards */}
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <div className="rounded-none border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#111116] p-4 font-mono">
           <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-500 text-xs mb-1">

@@ -109,7 +109,6 @@ export default function AdminFundersPage() {
         </button>
       </div>
 
-      {/* Form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-sm p-4">
           <div className="w-full max-w-lg rounded-none border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0c0c10] p-6 max-h-[85vh] overflow-y-auto shadow-2xl">
@@ -264,7 +263,6 @@ export default function AdminFundersPage() {
         </div>
       )}
 
-      {/* Funder list */}
       <div className="space-y-3">
         {funders.map((funder) => (
           <div

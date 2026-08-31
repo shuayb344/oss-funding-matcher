@@ -1,5 +1,6 @@
 /**
- * Seed script — loads funders from seed/funders.json into Supabase.
+ * Seed script — loads verified funders from seed/funders.json into Supabase,
+ * removing any unverified funders from the database.
  *
  * Usage:
  *   npx tsx scripts/seed-funders.ts
@@ -47,12 +48,29 @@ interface FunderSeed {
 }
 
 async function main() {
-  console.log("Loading funders from seed/funders.json…");
+  console.log("Loading verified funders from seed/funders.json…");
 
   const raw = readFileSync(join(__dirname, "../seed/funders.json"), "utf-8");
   const funders: FunderSeed[] = JSON.parse(raw);
 
-  console.log(`Found ${funders.length} funders. Upserting…`);
+  console.log(`Found ${funders.length} verified funders. Cleaning up unverified database entries…`);
+
+  const verifiedNames = funders.map((f) => f.name);
+
+  // Delete funders not present in the verified list
+  const { data: existingFunders } = await supabase.from("funders").select("id, name");
+  if (existingFunders && existingFunders.length > 0) {
+    const toDelete = existingFunders.filter((f) => !verifiedNames.includes(f.name)).map((f) => f.id);
+    if (toDelete.length > 0) {
+      console.log(`Removing ${toDelete.length} old/unverified funders…`);
+      const { error: delErr } = await supabase.from("funders").delete().in("id", toDelete);
+      if (delErr) {
+        console.error("Error deleting old funders:", delErr.message);
+      }
+    }
+  }
+
+  console.log(`Upserting ${funders.length} verified funders…`);
 
   for (const funder of funders) {
     const { error } = await supabase.from("funders").upsert(
@@ -76,7 +94,7 @@ async function main() {
     }
   }
 
-  console.log("\nDone.");
+  console.log("\nDone seeding verified funders.");
 }
 
 main().catch((err) => {

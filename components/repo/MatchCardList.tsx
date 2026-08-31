@@ -33,7 +33,6 @@ export function MatchCardList({
           key={match.id}
           className="group relative rounded-none border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0e0e12] backdrop-blur-xl p-6 hover:border-slate-300 dark:hover:border-white/20 transition-all overflow-hidden shadow-sm dark:shadow-none"
         >
-          {/* Left tier bar */}
           <div className={`absolute left-0 top-0 bottom-0 w-1 ${getMatchScoreBarBg(match.match_score)}`} />
 
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4 pl-2">
@@ -76,7 +75,6 @@ export function MatchCardList({
             </div>
           </div>
 
-          {/* Actions */}
           <div className="mt-5 border-t border-slate-200 dark:border-white/10 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <button
               onClick={() => onGeneratePitch(match)}

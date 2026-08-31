@@ -11,13 +11,11 @@ import { supabase } from "@/lib/db";
  * { "crons": [{ "path": "/api/cron/refresh-scores", "schedule": "0 6 * * *" }] }
  */
 export async function GET(request: NextRequest) {
-  // Verify this is a legitimate cron request
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Fetch all repos that haven't been analyzed in the last 7 days
   const sevenDaysAgo = new Date(
     Date.now() - 7 * 24 * 60 * 60 * 1000
   ).toISOString();
@@ -26,7 +24,7 @@ export async function GET(request: NextRequest) {
     .from("repos")
     .select("id, github_full_name, user_id")
     .or(`last_analyzed_at.is.null,last_analyzed_at.lt.${sevenDaysAgo}`)
-    .limit(100); // Cap at 100 repos per cron run
+    .limit(100);
 
   if (error) {
     return NextResponse.json({ error: "Failed to query repos" }, { status: 500 });
@@ -36,8 +34,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: "No stale repos to refresh", refreshed: 0 });
   }
 
-  // For each repo, we need the user's GitHub token to re-fetch metrics.
-  // Group repos by user to minimize token lookups.
   const userRepos = new Map<string, string[]>();
   for (const repo of staleRepos) {
     const existing = userRepos.get(repo.user_id) || [];
@@ -49,7 +45,6 @@ export async function GET(request: NextRequest) {
   let failed = 0;
 
   for (const [userId, repoIds] of userRepos) {
-    // Get the user's GitHub token
     const { data: account } = await supabase
       .from("accounts")
       .select("access_token")
@@ -63,7 +58,6 @@ export async function GET(request: NextRequest) {
 
     const token = account.access_token;
 
-    // Dynamically import to avoid issues with serverless
     const { fetchContributorCount, fetchRecentCommitCount } = await import(
       "@/lib/github"
     );

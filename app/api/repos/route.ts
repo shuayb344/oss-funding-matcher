@@ -14,7 +14,6 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Find the user in our database
   const { data: dbUser } = await supabase
     .from("users")
     .select("id")
@@ -25,7 +24,6 @@ export async function GET() {
     return NextResponse.json({ repos: [] });
   }
 
-  // Fetch their repos, sorted by criticality score
   const { data: repos } = await supabase
     .from("repos")
     .select("*")

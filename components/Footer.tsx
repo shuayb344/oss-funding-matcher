@@ -5,7 +5,6 @@ export function Footer() {
     <footer className="mt-auto border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a0a0d] py-10 transition-colors">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid gap-8 sm:grid-cols-3">
-          {/* Brand */}
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="h-7 w-7 rounded-none p-0.5 border border-emerald-500/50 bg-emerald-500/10 flex items-center justify-center">
@@ -20,9 +19,8 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Links */}
           <div>
-            <h3 className="font-mono text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-500 mb-3">
+            <h3 className="font-mono text-[11px] font-[600] uppercase tracking-widest text-slate-500 dark:text-zinc-500 mb-3">
               Product
             </h3>
             <ul className="space-y-2 font-mono text-xs">
@@ -39,7 +37,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Resources */}
           <div>
             <h3 className="font-mono text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-500 mb-3">
               Resources

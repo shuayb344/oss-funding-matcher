@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Rate limit: 10 matching requests per minute per user
   const { response } = rateLimitOrContinue(`match:${session.user.id}`, 10, 60_000);
   if (response) return response;
 
@@ -51,7 +50,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "repo_id is required" }, { status: 400 });
   }
 
-  // Fetch the repo and verify ownership
   const { data: repo } = await supabase
     .from("repos")
     .select("*, users!inner(github_id)")
@@ -62,7 +60,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Repo not found" }, { status: 404 });
   }
 
-  // Fetch all funders
   const { data: funders } = await supabase
     .from("funders")
     .select("*")
@@ -72,20 +69,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No funders found" }, { status: 404 });
   }
 
-  // Build the AI prompt
   const prompt = buildMatchingPrompt(repo, funders as FunderRecord[]);
 
   try {
     const { content, provider } = await callAI(prompt);
 
-    // Parse the AI response
     const matches = parseMatchResponse(content);
 
-    // Store matches in the database
     const storedMatches = [];
 
     for (const match of matches) {
-      if (match.match_score < 40) continue; // Only store meaningful matches
+      if (match.match_score < 40) continue;
 
       const { data: stored } = await supabase
         .from("matches")

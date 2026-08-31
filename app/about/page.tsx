@@ -85,7 +85,6 @@ const factors = [
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 py-16 bg-transparent min-h-[calc(100vh-3.5rem)]">
-      {/* Header */}
       <div className="mb-12 border-b border-slate-200 dark:border-white/10 pb-8">
         <div className="font-mono text-xs uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-2">
           // OpenSSF Scoring Algorithm
@@ -98,7 +97,6 @@ export default function AboutPage() {
         </p>
       </div>
 
-      {/* Formula block: Square-cornered IDE Code Editor Block */}
       <div className="mb-12 rounded-none border border-slate-200 dark:border-white/10 bg-slate-900 dark:bg-[#060608] p-6 shadow-2xl relative overflow-hidden">
         <div className="flex items-center gap-2 justify-between border-b border-white/10 pb-3 mb-4">
           <div className="flex items-center gap-2">
@@ -132,7 +130,6 @@ export default function AboutPage() {
         </p>
       </div>
 
-      {/* Factor breakdown: 2-Column Square Card Grid */}
       <div className="mb-12">
         <div className="font-mono text-xs uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-6">
           // Parameter Breakdown Matrix
@@ -147,7 +144,6 @@ export default function AboutPage() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    {/* Square indicator dot */}
                     <div className={`h-2.5 w-2.5 rounded-none ${factor.colorBg}`} />
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-white font-sans">
                       {factor.name}
@@ -175,7 +171,6 @@ export default function AboutPage() {
         </div>
       </div>
 
-      {/* Limitations Block */}
       <div className="rounded-none border border-amber-500/30 bg-amber-50 dark:bg-amber-500/[0.03] p-6">
         <div className="flex items-center gap-2 mb-3">
           <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />

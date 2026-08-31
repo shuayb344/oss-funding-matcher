@@ -21,11 +21,9 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Rate limit: 5 syncs per minute per user
   const { response } = rateLimitOrContinue(`sync:${session.user.id}`, 5, 60_000);
   if (response) return response;
 
-  // Get or create the user in our database
   let { data: dbUser } = await supabase
     .from("users")
     .select("id, username")
@@ -33,7 +31,6 @@ export async function POST() {
     .single();
 
   if (!dbUser) {
-    // First time — create the user record
     const username = session.user.name || session.user.email || "unknown";
     const { data: newUser } = await supabase
       .from("users")
@@ -52,8 +49,6 @@ export async function POST() {
     return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
   }
 
-  // We need a GitHub access token to call the API.
-  // Try session token first, then fallback to Account table.
   let token = (session.user as any)?.accessToken;
 
   if (!token) {
@@ -73,10 +68,8 @@ export async function POST() {
   }
 
   try {
-    // Fetch repos from GitHub
     const githubRepos = await fetchUserRepos(token, dbUser.username);
 
-    // Process ALL fetched repos in concurrent batches of 5
     const results = [];
     const BATCH_SIZE = 5;
 

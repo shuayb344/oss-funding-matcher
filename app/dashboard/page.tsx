@@ -8,6 +8,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { RepoCardSkeleton, PageLoader } from "@/components/LoadingSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { RefreshCw, Loader2, FolderGit2, Star, GitFork, Users } from "lucide-react";
+import { getScoreTierInfo, getScoreTextColor } from "@/lib/repoUtils";
 
 interface Repo {
   id: string;
@@ -207,30 +208,3 @@ function RepoCard({ repo }: { repo: Repo }) {
   );
 }
 
-function getScoreTierInfo(score: number): { label: string; accentBg: string; textColor: string } {
-  if (score >= 0.5) {
-    return {
-      label: "Critical",
-      accentBg: "bg-emerald-500",
-      textColor: "text-emerald-600 dark:text-emerald-400",
-    };
-  }
-  if (score >= 0.3) {
-    return {
-      label: "Moderate",
-      accentBg: "bg-amber-500",
-      textColor: "text-amber-600 dark:text-amber-400",
-    };
-  }
-  return {
-    label: "Developing",
-    accentBg: "bg-slate-400 dark:bg-zinc-600",
-    textColor: "text-slate-500 dark:text-zinc-500",
-  };
-}
-
-function getScoreTextColor(score: number): string {
-  if (score >= 0.5) return "text-emerald-600 dark:text-emerald-400";
-  if (score >= 0.3) return "text-amber-600 dark:text-amber-400";
-  return "text-slate-500 dark:text-zinc-500";
-}

@@ -13,7 +13,6 @@ export function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-14 border-b border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#0a0a0d]/95 backdrop-blur-md transition-colors">
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-4 sm:px-6">
-        {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="h-8 w-8 rounded-none p-0.5 border border-emerald-500/50 bg-emerald-500/10 flex items-center justify-center group-hover:border-emerald-400 transition-colors">
             <img
@@ -27,7 +26,6 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop Navigation Links */}
         <div className="hidden md:flex items-center gap-6 font-mono text-xs">
           <Link
             href="/about"
@@ -50,7 +48,6 @@ export function Navbar() {
             </Link>
           )}
 
-          {/* Exclusive Admin Link */}
           {session?.user?.id === process.env.NEXT_PUBLIC_ADMIN_GITHUB_ID && (
             <Link
               href="/admin/funders"
@@ -62,7 +59,6 @@ export function Navbar() {
           )}
         </div>
 
-        {/* Right Action Menu */}
         <div className="hidden sm:flex items-center gap-3 font-mono text-xs">
           <ThemeToggle />
 
@@ -100,7 +96,6 @@ export function Navbar() {
           )}
         </div>
 
-        {/* Mobile Controls */}
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
           <button
@@ -113,7 +108,6 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a0a0d] px-4 py-4 space-y-3 font-mono text-xs transition-colors shadow-lg">
           <Link

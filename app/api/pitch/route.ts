@@ -24,7 +24,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Rate limit: 20 pitch requests per minute per user
   const { response } = rateLimitOrContinue(`pitch:${session.user.id}`, 20, 60_000);
   if (response) return response;
 
@@ -35,7 +34,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "match_id is required" }, { status: 400 });
   }
 
-  // Fetch the match with repo and funder details
   const { data: match } = await supabase
     .from("matches")
     .select(`
@@ -68,20 +66,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Match not found" }, { status: 404 });
   }
 
-  // Verify ownership
   const repo = match.repos as any;
   const funder = match.funders as any;
   if (repo.users?.github_id !== session.user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  // Build the prompt
   const prompt = buildPitchPrompt(repo, funder, match.match_reasoning);
 
   try {
     const { content, provider } = await callAI(prompt);
 
-    // Store the pitch
     const { data: pitch } = await supabase
       .from("pitches")
       .insert({
@@ -104,12 +99,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * PATCH /api/pitch
- * Body: { pitch_id: string, edited_text: string }
- *
- * Saves the user's edited version of a pitch.
- */
 export async function PATCH(request: NextRequest) {
   const session = await auth();
 
@@ -126,7 +115,6 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  // Verify ownership through the match -> repo -> user chain
   const { data: pitch } = await supabase
     .from("pitches")
     .select("id, match_id, matches!inner(repo_id, repos!inner(user_id, users!inner(github_id)))")
