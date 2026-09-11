@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "node scripts/dev.js",
     "build": "next build",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
     "start": "next start",
     "lint": "eslint"
   },
@@ -30,6 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^1.0.0"
   }
 }
