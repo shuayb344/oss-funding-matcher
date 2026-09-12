@@ -1,68 +1,138 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockFunders = [
-  { id: 1, name: 'Funder A' },
-  { id: 2, name: 'Funder B' },
-];
+interface Suggestion {
+  id: string;
+  name: string;
+  application_url: string;
+  description: string;
+  focus_tags: string[];
+  notes: string;
+  status: string;
+  created_at: string;
+}
 
-describe('GET /api/funders route (end-to-end with mocked Supabase)', () => {
+interface MockResponse<T = unknown> {
+  payload: T;
+  status: number;
+}
+
+function makeResponse<T>(payload: T, init?: { status?: number }): MockResponse<T> {
+  return {
+    payload,
+    status: init?.status ?? 200,
+  };
+}
+
+const submittedSuggestions: Suggestion[] = [];
+
+describe("funder suggestion flow", () => {
   beforeEach(() => {
-    // Ensure module cache is cleared between tests when we re-mock
     vi.resetModules();
+    submittedSuggestions.length = 0;
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  it("submits a funder suggestion and makes it visible in the admin queue", async () => {
+    const mockUser = { id: "user-123", github_id: "gh-42", username: "octocat" };
 
-  it('returns funders list when supabase returns data', async () => {
-    // Mock the Supabase client used by the route
-    vi.doMock('@/lib/db', () => ({
+    vi.doMock("@/lib/auth", () => ({
+      auth: async () => ({
+        user: { id: "gh-42", username: "octocat", name: "octocat" },
+      }),
+    }));
+
+    vi.doMock("@/lib/admin", () => ({
+      isUserAdmin: () => true,
+    }));
+
+    vi.doMock("@/lib/db", () => ({
       supabase: {
-        from: () => ({
-          select: () => ({
-            order: () => Promise.resolve({ data: mockFunders, error: null }),
-          }),
-        }),
+        from: (table: string) => {
+          if (table === "users") {
+            return {
+              select: () => ({
+                eq: () => ({
+                  maybeSingle: async () => ({ data: mockUser, error: null }),
+                }),
+              }),
+            };
+          }
+
+          if (table === "funder_suggestions") {
+            return {
+              insert: (payload: Omit<Suggestion, "id" | "created_at">) => ({
+                select: () => ({
+                  single: async () => {
+                    const suggestion: Suggestion = {
+                      id: "suggestion-123",
+                      ...payload,
+                      created_at: "2026-09-12T00:00:00Z",
+                    };
+                    submittedSuggestions.push(suggestion);
+                    return { data: suggestion, error: null };
+                  },
+                }),
+              }),
+              select: () => ({
+                order: async () => ({ data: submittedSuggestions, error: null }),
+              }),
+            };
+          }
+
+          return {
+            select: () => ({}),
+            insert: () => ({}),
+          };
+        },
       },
     }));
 
-    // Simplify NextResponse.json to return the payload directly
-    vi.doMock('next/server', () => ({
+    vi.doMock("next/server", () => ({
       NextResponse: {
-        json: (payload: any, init?: any) => ({ payload, status: init?.status ?? 200 }),
+        json: <T,>(payload: T, init?: { status?: number }) => makeResponse(payload, init),
       },
     }));
 
-    const { GET } = await import('../app/api/funders/route');
-    const res = await GET();
+    type SuggestRoute = { POST: (req: Request) => Promise<MockResponse<{ success: boolean; suggestion: Suggestion }>> };
+    type AdminRoute = { GET: (req: Request) => Promise<MockResponse<{ suggestions: Suggestion[] }>> };
 
-    expect(res.status).toBe(200);
-    expect(res.payload).toHaveProperty('funders');
-    expect(res.payload.funders).toEqual(mockFunders);
-  });
+    const { POST } = (await import("../app/api/funders/suggest/route")) as unknown as SuggestRoute;
+    const { GET } = (await import("../app/api/admin/suggestions/route")) as unknown as AdminRoute;
 
-  it('returns 500 when supabase returns an error', async () => {
-    vi.doMock('@/lib/db', () => ({
-      supabase: {
-        from: () => ({
-          select: () => ({
-            order: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
-          }),
-        }),
-      },
-    }));
+    const payload = {
+      name: "Open Source Seed Fund",
+      application_url: "example.com/apply",
+      description: "Supports open source infrastructure teams.",
+      focus_tags: ["infrastructure", "security"],
+      notes: "Community submission",
+    };
 
-    vi.doMock('next/server', () => ({
-      NextResponse: {
-        json: (payload: any, init?: any) => ({ payload, status: init?.status ?? 200 }),
-      },
-    }));
+    const submitRes = await POST(
+      new Request("http://localhost/api/funders/suggest", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      })
+    );
 
-    const { GET } = await import('../app/api/funders/route');
-    const res = await GET();
+    expect(submitRes.status).toBe(200);
+    expect(submitRes.payload.success).toBe(true);
+    expect(submitRes.payload.suggestion).toMatchObject({
+      name: payload.name,
+      application_url: "https://example.com/apply",
+      status: "pending",
+    });
 
-    expect(res.status).toBe(500);
-    expect(res.payload).toHaveProperty('error', 'Failed to load funders');
+    const queueRes = await GET(
+      new Request("http://localhost/api/admin/suggestions", {
+        method: "GET",
+      })
+    );
+
+    expect(queueRes.status).toBe(200);
+    expect(queueRes.payload.suggestions).toHaveLength(1);
+    expect(queueRes.payload.suggestions[0]).toMatchObject({
+      name: payload.name,
+      application_url: "https://example.com/apply",
+      status: "pending",
+    });
   });
 });
